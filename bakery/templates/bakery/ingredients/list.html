@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}食材{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>食材</h1>
+  {% if request.membership.is_admin %}<a class="btn btn-primary" href="{% url 'ingredient_new' %}">＋ 食材を登録する</a>{% endif %}
+</div>
+
+<form class="filters filters-5 card" method="get"
+      hx-get="{% url 'ingredient_list' %}" hx-target="#results" hx-push-url="true"
+      hx-trigger="input changed delay:300ms from:input[name=q], change from:select">
+  <input type="search" name="q" value="{{ q }}" placeholder="食材名・ID・旧コードで探す" aria-label="検索する言葉">
+  <select name="category" aria-label="カテゴリー">
+    <option value="">すべてのカテゴリー</option>
+    {% for c in categories %}<option value="{{ c.pk }}" {% if category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}
+  </select>
+  <select name="status" aria-label="使用状態">
+    <option value="active" {% if status == "active" %}selected{% endif %}>使用中</option>
+    <option value="stopped" {% if status == "stopped" %}selected{% endif %}>使用停止</option>
+    <option value="all" {% if status == "all" %}selected{% endif %}>すべて</option>
+  </select>
+  <select name="allergen" aria-label="アレルゲン確認">
+    <option value="">アレルゲン：すべて</option>
+    <option value="unconfirmed" {% if allergen == "unconfirmed" %}selected{% endif %}>アレルゲン未確認のみ</option>
+  </select>
+  <select name="nutrition" aria-label="栄養成分">
+    <option value="">栄養成分：すべて</option>
+    <option value="missing" {% if nutrition == "missing" %}selected{% endif %}>栄養未入力のみ</option>
+  </select>
+  <noscript><button class="btn">絞り込む</button></noscript>
+</form>
+
+<div id="results">{% include "bakery/ingredients/_list_results.html" %}</div>
+{% endblock %}

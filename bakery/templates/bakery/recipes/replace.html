@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}中間レシピの置き換え{% endblock %}
+{% block content %}
+<section class="narrow wide-ok">
+  <p><a class="linklike" href="{% url 'recipe_list' %}">← レシピ一覧</a></p>
+  <h1>中間レシピの置き換え</h1>
+  <p class="hint">使用中の中間レシピを新しいバージョンに差し替えます。上位のレシピのIDはそのままで、材料の参照先だけが変わります（使用量・工程・並び順は変わりません）。</p>
+
+  <form method="get" class="card stack">
+    <label class="field" for="id_old"><span>置き換え前（今使われている中間レシピ）</span>
+      <select name="old" id="id_old" onchange="this.form.requestSubmit()">
+        <option value="">選んでください</option>
+        {% for r in olds %}<option value="{{ r.pk }}" {% if old and old.pk == r.pk %}selected{% endif %}>{{ r.code }} {{ r.name }}（v{{ r.version }}）{% if r.status == 'stopped' %}［使用停止］{% endif %}</option>{% endfor %}
+      </select></label>
+    <label class="field" for="id_new"><span>置き換え後</span>
+      <select name="new" id="id_new" onchange="this.form.requestSubmit()">
+        <option value="">選んでください</option>
+        {% for r in news %}{% if not old or r.pk != old.pk %}<option value="{{ r.pk }}" {% if new and new.pk == r.pk %}selected{% endif %}>{% if old and r.name == old.name %}★ {% endif %}{{ r.code }} {{ r.name }}（v{{ r.version }}）</option>{% endif %}{% endfor %}
+      </select></label>
+    {% if old %}<p class="hint">★ は置き換え前と同じ名前のレシピ（別バージョン）です。</p>{% endif %}
+    <noscript><button class="btn">影響を確認する</button></noscript>
+  </form>
+
+  {% if error %}<p class="msg-inline msg-error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if impact %}
+  <section class="card">
+    <h2>影響の確認</h2>
+    <p><strong>{{ impact.old.code }} {{ impact.old.name }}（v{{ impact.old.version }}）</strong> → <strong>{{ impact.new.code }} {{ impact.new.name }}（v{{ impact.new.version }}）</strong></p>
+
+    <h3>材料を差し替えるレシピ（{{ impact.parents|length }} 件）</h3>
+    <ul class="result-list">{% for r in impact.parents %}<li><span class="tag">{{ r.get_kind_display }}</span> <span class="code">{{ r.code }}</span> {{ r.name }} <span class="muted">v{{ r.version }}</span></li>{% endfor %}</ul>
+    {% if impact.affected|length > impact.parents|length %}
+    <p class="hint">中間レシピ経由も含めると、合計 {{ impact.affected|length }} 件のレシピの原価が変わります。</p>
+    {% endif %}
+
+    <h3>影響する商品（{{ impact.products|length }} 件）</h3>
+    {% if impact.products %}
+    <table class="table">
+      <thead><tr><th>商品</th><th class="num">変更前原価</th><th class="num">変更後原価</th><th class="num">差額</th><th class="num">原価率</th></tr></thead>
+      <tbody>
+      {% for p in impact.products %}
+        <tr>
+          <td><span class="code">{{ p.product.code }}</span> {{ p.product.name }}</td>
+          <td class="num">{{ p.before_cost|cost:1 }} 円</td>
+          <td class="num">{{ p.after_cost|cost:1 }} 円</td>
+          <td class="num {% if p.diff > 0 %}warn{% endif %}">{{ p.diff|signed_cost:1 }} 円</td>
+          <td class="num">{% if p.before_rate is not None %}{{ p.before_rate|percent }}% → {{ p.after_rate|percent }}%{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">影響する商品はありません。</p>
+    {% endif %}
+
+    <h3>アレルゲンの変化</h3>
+    {% if impact.added_allergens or impact.removed_allergens %}
+      {% if impact.added_allergens %}<p class="warn">増える：{{ impact.added_allergens|join:"、" }}</p>{% endif %}
+      {% if impact.removed_allergens %}<p>なくなる：{{ impact.removed_allergens|join:"、" }}</p>{% endif %}
+    {% else %}
+      <p>変化なし</p>
+    {% endif %}
+    {% if impact.unconfirmed_after %}<p class="warn">置き換え後のレシピにはアレルゲン未確認の材料があります</p>{% endif %}
+
+    <form method="post" class="button-row" data-once>
+      {% csrf_token %}
+      <input type="hidden" name="old" value="{{ impact.old.pk }}">
+      <input type="hidden" name="new" value="{{ impact.new.pk }}">
+      <a class="btn" href="{% url 'recipe_detail' impact.old.pk %}">やめる</a>
+      <button class="btn btn-primary">この内容で置き換える</button>
+    </form>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

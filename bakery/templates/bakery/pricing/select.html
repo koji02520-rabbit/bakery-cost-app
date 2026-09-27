@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}価格を変更する{% endblock %}
+{% block content %}
+<section class="narrow wide-ok">
+  <p class="steps"><span class="on">1 食材を選ぶ</span><span>2 新しい価格</span><span>3 影響確認</span></p>
+  <h1>価格を変更する食材を選ぶ</h1>
+  <form class="filters filters-3 card" method="get"
+        hx-get="{% url 'price_change' %}" hx-target="#results" hx-push-url="true"
+        hx-trigger="input changed delay:300ms from:input[name=q], change">
+    <input type="search" name="q" value="{{ q }}" placeholder="食材名・ID・旧コードで探す" aria-label="検索する言葉" autofocus>
+    <select name="category" aria-label="カテゴリー">
+      <option value="">すべてのカテゴリー</option>
+      {% for c in categories %}<option value="{{ c.pk }}" {% if category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}
+    </select>
+    <label class="choice"><input type="checkbox" name="stopped" value="1" {% if show_stopped %}checked{% endif %}> 使用停止も表示</label>
+    <noscript><button class="btn">探す</button></noscript>
+  </form>
+  <div id="results">{% include "bakery/pricing/_select_results.html" %}</div>
+</section>
+{% endblock %}

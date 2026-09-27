@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}所属がありません{% endblock %}
+{% block content %}
+<section class="narrow card">
+  <h1>所属する会社が登録されていません</h1>
+  <p>このユーザー（{{ user.get_username }}）は、まだ会社・店舗に所属していないため使えません。管理者に「所属・権限」の登録を依頼してください。</p>
+  <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn">ログアウト</button></form>
+</section>
+{% endblock %}

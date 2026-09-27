@@ -1,0 +1,9 @@
+{% load bakery_photos %}<form class="photo-add" hx-post="{% photo_url kind 'add' owner.pk %}" hx-encoding="multipart/form-data"
+      hx-target="#{% if panel %}photo-panel{% else %}photo-section{% endif %}" hx-swap="outerHTML" hx-indicator="#photo-uploading">
+  {% if panel %}<input type="hidden" name="panel" value="1">{% endif %}
+  <label class="photo-add-tile" title="写真を追加（撮影・写真から選ぶ）">
+    <input type="file" name="photos" accept="image/*" multiple data-photo-input hidden>
+    <span class="plus" aria-hidden="true">＋</span>
+    <span class="photo-add-text">写真を追加</span>
+  </label>
+</form>

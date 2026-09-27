@@ -1,0 +1,3 @@
+{% load bakery_format %}<span class="tag {% if not c.is_ingredient %}tag-recipe{% endif %}">{% if c.is_ingredient %}食材{% else %}中間レシピ{% endif %}</span>
+<span class="code">{{ c.obj.code }}</span> {{ c.obj.name }}{% if not c.is_ingredient %} v{{ c.obj.version }}{% endif %}
+{% if c.is_ingredient %}<span class="muted small">／{{ c.obj.supplier.name }}／{{ c.obj.unit_price|yen_per_g }} 円/g</span>{% endif %}

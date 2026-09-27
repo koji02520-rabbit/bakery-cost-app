@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}食材を登録する{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="steps"><span class="on">1 入力</span><span>2 確認</span><span>3 アレルゲン</span></p>
+  <h1>食材を登録する</h1>
+
+  <form method="post" action="{% url 'ingredient_new' %}" class="card stack" id="step1" novalidate
+        hx-post="{% url 'ingredient_new_check' %}" hx-swap="none"
+        hx-trigger="input changed delay:300ms, change, focusout, supplier-added from:body">
+    {% csrf_token %}
+    <input type="hidden" name="_touched" id="touched" value="">
+
+    <label class="field" for="id_name"><span>食材名</span>
+      <input type="text" name="name" id="id_name" value="{{ form.name.value|default:'' }}" maxlength="100" autocomplete="off" placeholder="例：強力粉">
+    </label>
+    <div id="err-name" class="field-error" role="alert">{{ fb.errors.name|default:'' }}</div>
+
+    <label class="field" for="id_category"><span>カテゴリー</span>
+      <select name="category" id="id_category">
+        <option value="">選んでください</option>
+        {% for c in form.fields.category.queryset %}<option value="{{ c.pk }}" {% if form.category.value|stringformat:"s" == c.pk|stringformat:"s" %}selected{% endif %}>{{ c }}</option>{% endfor %}
+      </select>
+    </label>
+    <div id="err-category" class="field-error" role="alert">{{ fb.errors.category|default:'' }}</div>
+
+    {% with selected_supplier=form.supplier.value|default:''|stringformat:"s" %}
+    {% include "bakery/ingredients/_supplier_block.html" %}
+    {% endwith %}
+    <div id="err-supplier" class="field-error" role="alert">{{ fb.errors.supplier|default:'' }}</div>
+
+    <label class="field" for="id_purchase_weight_g"><span>購入重量</span>
+      <span class="with-unit"><input type="text" inputmode="decimal" name="purchase_weight_g" id="id_purchase_weight_g" value="{{ form.purchase_weight_g.value|default:'' }}" autocomplete="off" placeholder="例：25000"><span class="unit">g</span></span>
+    </label>
+    <p class="hint">kg・L ではなく g で入力します（25kg → 25000）。液体も重さ（g）で入力します</p>
+    <div id="err-purchase_weight_g" class="field-error" role="alert">{{ fb.errors.purchase_weight_g|default:'' }}</div>
+
+    <label class="field" for="id_purchase_price"><span>購入価格</span>
+      <span class="with-unit"><input type="text" inputmode="decimal" name="purchase_price" id="id_purchase_price" value="{{ form.purchase_price.value|default:'' }}" autocomplete="off" placeholder="例：5000"><span class="unit">円</span></span>
+    </label>
+    <div id="err-purchase_price" class="field-error" role="alert">{{ fb.errors.purchase_price|default:'' }}</div>
+
+    {% include "bakery/ingredients/_step1_auto.html" %}
+  </form>
+</section>
+{% endblock %}

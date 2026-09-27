@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}食材の修正{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="muted"><span class="code">{{ ingredient.code }}</span></p>
+  <h1>食材の情報を修正する</h1>
+  <form method="post" class="card stack" novalidate data-once>
+    {% csrf_token %}
+    {% for field in form %}
+    <label class="field" for="{{ field.id_for_label }}"><span>{{ field.label }}{% if not field.field.required %}（任意）{% endif %}</span>{{ field }}</label>
+    {% if field.errors %}<div class="field-error" role="alert">{{ field.errors.0 }}</div>{% endif %}
+    {% if field.name == "category" %}<p class="hint">カテゴリーを変えても食材ID（{{ ingredient.code }}）は変わりません</p>{% endif %}
+    {% endfor %}
+    <p class="hint">購入重量・購入価格は<a href="{% url 'price_change_edit' ingredient.pk %}">「価格を変更する」</a>から変更します（影響する商品を確認するため）</p>
+    <div class="button-row">
+      <a class="btn" href="{% url 'ingredient_detail' ingredient.pk %}">やめる</a>
+      <button class="btn btn-primary">保存する</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

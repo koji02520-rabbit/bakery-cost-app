@@ -1,0 +1,6 @@
+{% if missing %}
+<div class="msg-inline msg-warn">
+  栄養値が未入力の材料があります（その材料は0として計算しているため、下の値は実際より少なく出ています）
+  <ul class="plain small">{% for s in missing %}<li>{{ s }}</li>{% endfor %}</ul>
+</div>
+{% endif %}

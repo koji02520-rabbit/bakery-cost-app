@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ recipe.name }}の編集{% endblock %}
+{% block content %}
+<p><a class="linklike" href="{% url 'recipe_detail' recipe.pk %}">← レシピ詳細</a></p>
+<div class="page-head">
+  {% include "bakery/recipes/_header.html" %}
+  <a class="btn" href="{% url 'recipe_info_edit' recipe.pk %}?next=edit">名前・手順・メモ</a>
+</div>
+{% include "bakery/photos/_section.html" with kind="recipe" owner=recipe photos=recipe.photos.all %}
+{% include "bakery/recipes/_editor_body.html" %}
+<div id="picker"></div>
+<script src="{% static 'bakery/vendor/Sortable.min.js' %}" defer></script>
+{% endblock %}

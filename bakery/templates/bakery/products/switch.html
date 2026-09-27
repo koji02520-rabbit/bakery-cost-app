@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}採用レシピの切替{% endblock %}
+{% block content %}
+<section class="narrow wide-ok">
+  <p><a class="linklike" href="{% url 'product_detail' product.pk %}">← 商品詳細</a></p>
+  <p class="muted"><span class="code">{{ product.code }}</span> {{ product.name }}</p>
+  <h1>採用レシピを切り替える</h1>
+
+  <form method="get" class="card stack">
+    <p>今の採用レシピ：{% if product.adopted_recipe %}<strong>{{ product.adopted_recipe.code }} {{ product.adopted_recipe.name }}（v{{ product.adopted_recipe.version }}）</strong>{% else %}<span class="warn">未設定</span>{% endif %}</p>
+    <label class="field" for="id_recipe"><span>新しい採用レシピ</span>
+      <select name="recipe" id="id_recipe" onchange="this.form.requestSubmit()">
+        <option value="">選んでください</option>
+        {% for r in candidates %}<option value="{{ r.pk }}" {% if new_recipe and new_recipe.pk == r.pk %}selected{% endif %}>{% if product.adopted_recipe and r.name == product.adopted_recipe.name %}★ {% endif %}{{ r.code }} {{ r.name }}（v{{ r.version }}）</option>{% endfor %}
+      </select></label>
+    {% if product.adopted_recipe %}<p class="hint">★ は今の採用レシピと同じ名前のレシピ（別バージョン）です。</p>{% endif %}
+    <noscript><button class="btn">原価を比べる</button></noscript>
+  </form>
+
+  {% if error %}<p class="msg-inline msg-error" role="alert">{{ error }}</p>{% endif %}
+
+  {% if impact %}
+  <section class="card">
+    <h2>切り替えの確認</h2>
+    <table class="table compare">
+      <thead><tr><th></th><th>現在</th><th>切り替え後</th></tr></thead>
+      <tbody>
+        <tr><th>レシピ</th>
+          <td>{% if impact.old_recipe %}{{ impact.old_recipe.code }} {{ impact.old_recipe.name }}（v{{ impact.old_recipe.version }}）{% else %}—{% endif %}</td>
+          <td><strong>{{ impact.new_recipe.code }} {{ impact.new_recipe.name }}（v{{ impact.new_recipe.version }}）</strong></td></tr>
+        <tr><th>原価</th>
+          <td class="num">{% if impact.old_cost is not None %}{{ impact.old_cost|cost:1 }} 円{% else %}—{% endif %}</td>
+          <td class="num strong">{{ impact.new_cost|cost:1 }} 円</td></tr>
+        <tr><th>原価率</th>
+          <td class="num">{% if impact.old_rate is not None %}{{ impact.old_rate|percent }}%{% else %}—{% endif %}</td>
+          <td class="num strong">{% if impact.new_rate is not None %}{{ impact.new_rate|percent }}%{% else %}—{% endif %}</td></tr>
+      </tbody>
+    </table>
+    {% if impact.diff is not None %}
+    <p class="big-diff {% if impact.diff > 0 %}warn{% endif %}">原価差額 {{ impact.diff|signed_cost:1 }} 円</p>
+    {% endif %}
+    <p class="hint">税抜売価 {{ product.price_excluding_tax|yen }} 円で計算しています。</p>
+
+    <h3>アレルゲンの変化</h3>
+    {% if impact.added_allergens or impact.removed_allergens %}
+      {% if impact.added_allergens %}<p class="warn">増える：{{ impact.added_allergens|join:"、" }}</p>{% endif %}
+      {% if impact.removed_allergens %}<p>なくなる：{{ impact.removed_allergens|join:"、" }}</p>{% endif %}
+    {% elif impact.old_recipe %}
+      <p>変化なし</p>
+    {% else %}
+      <p class="muted">今の採用レシピがないため、比較はありません</p>
+    {% endif %}
+    {% if impact.new_has_unconfirmed %}<p class="warn">切り替え後のレシピにはアレルゲン未確認の材料があります</p>{% endif %}
+
+    <form method="post" class="button-row" data-once>
+      {% csrf_token %}
+      <input type="hidden" name="recipe" value="{{ impact.new_recipe.pk }}">
+      <a class="btn" href="{% url 'product_detail' product.pk %}">やめる</a>
+      <button class="btn btn-primary">この内容で切り替える</button>
+    </form>
+  </section>
+  {% endif %}
+</section>
+{% endblock %}

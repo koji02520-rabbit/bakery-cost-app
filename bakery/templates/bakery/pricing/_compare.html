@@ -1,0 +1,9 @@
+{% load bakery_format %}
+{% if oob %}
+<div id="err-purchase_weight_g" class="field-error" role="alert" hx-swap-oob="true">{{ form.errors.purchase_weight_g.0|default:'' }}</div>
+<div id="err-purchase_price" class="field-error" role="alert" hx-swap-oob="true">{{ form.errors.purchase_price.0|default:'' }}</div>
+{% endif %}
+<dl class="auto-values" id="unit-compare" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <div><dt>変更前の1g単価</dt><dd class="num">{{ compare.before|yen_per_g }} 円/g</dd></div>
+  <div><dt>変更後の1g単価（自動）</dt><dd class="num">{% if compare.after is not None %}{{ compare.after|yen_per_g }} 円/g{% if compare.after > compare.before %} <span class="warn">↑</span>{% elif compare.after < compare.before %} <span class="ok">↓</span>{% endif %}{% else %}—{% endif %}</dd></div>
+</dl>

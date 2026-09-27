@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{% if product %}商品の修正{% else %}商品を登録する{% endif %}{% endblock %}
+{% block content %}
+<section class="narrow">
+  {% if product %}<p class="muted"><span class="code">{{ product.code }}</span></p>{% endif %}
+  <h1>{% if product %}商品の情報を修正する{% else %}商品を登録する{% endif %}</h1>
+  <form method="post" class="card stack" novalidate data-once>
+    {% csrf_token %}
+    <label class="field" for="id_name"><span>商品名</span>{{ form.name }}</label>
+    {% if form.errors.name %}<div class="field-error" role="alert">{{ form.errors.name.0 }}</div>{% endif %}
+
+    <label class="field" for="id_price_excluding_tax"><span>税抜売価</span>
+      <span class="with-unit">{{ form.price_excluding_tax }}<span class="unit">円</span></span></label>
+    {% if form.errors.price_excluding_tax %}<div class="field-error" role="alert">{{ form.errors.price_excluding_tax.0 }}</div>{% endif %}
+    <p class="hint">税込売価と原価率は自動で計算します。</p>
+
+    {% if form.adopted_recipe %}
+    <label class="field" for="id_adopted_recipe"><span>採用レシピ（最終商品レシピ）</span>
+      <select name="adopted_recipe" id="id_adopted_recipe">
+        <option value="">あとで設定する</option>
+        {% for r in form.fields.adopted_recipe.queryset %}<option value="{{ r.pk }}" {% if form.adopted_recipe.value|stringformat:"s" == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.code }} {{ r.name }}（v{{ r.version }}）</option>{% endfor %}
+      </select></label>
+    {% if form.errors.adopted_recipe %}<div class="field-error" role="alert">{{ form.errors.adopted_recipe.0 }}</div>{% endif %}
+    <p class="hint">選べるのは、材料が入っている最終商品レシピ（商品1個分）です。一覧にない場合は、先に「レシピを作る」で作ってください。</p>
+    {% else %}
+    <p class="hint">採用レシピは、商品詳細の「採用レシピを切り替える」から変更します（変更前後の原価を確認するため）。</p>
+    {% endif %}
+
+    {% if preview_code %}<dl class="auto-values auto-values-1"><div><dt>商品ID（自動）</dt><dd class="code">{{ preview_code }}</dd></div></dl>{% endif %}
+
+    <div class="button-row">
+      <a class="btn" href="{% if product %}{% url 'product_detail' product.pk %}{% else %}{% url 'product_list' %}{% endif %}">やめる</a>
+      <button class="btn btn-primary">{% if product %}保存する{% else %}登録する{% endif %}</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

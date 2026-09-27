@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}ログイン{% endblock %}
+{% block content %}
+<section class="narrow card login">
+  <h1>原価管理</h1>
+  <p class="muted">ユーザー名とパスワードを入力してください</p>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    {% if form.non_field_errors %}<p class="field-error" role="alert">ユーザー名またはパスワードが違います</p>{% endif %}
+    <label class="field"><span>ユーザー名</span>
+      <input type="text" name="username" value="{{ form.username.value|default:'' }}" autocomplete="username" autocapitalize="none" required autofocus></label>
+    <label class="field"><span>パスワード</span>
+      <input type="password" name="password" autocomplete="current-password" required></label>
+    <input type="hidden" name="next" value="{{ next }}">
+    <button class="btn btn-primary btn-block">ログイン</button>
+  </form>
+</section>
+{% endblock %}

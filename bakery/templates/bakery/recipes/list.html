@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}レシピ{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>レシピ</h1>
+  <div class="button-row compact">
+    {% if request.membership.is_admin %}<a class="btn" href="{% url 'recipe_replace' %}">中間レシピの置き換え</a>{% endif %}
+    <a class="btn btn-primary" href="{% url 'recipe_new' %}">＋ レシピを作る</a>
+  </div>
+</div>
+
+<form class="filters card" method="get"
+      hx-get="{% url 'recipe_list' %}" hx-target="#results" hx-push-url="true"
+      hx-trigger="input changed delay:300ms from:input[name=q], change from:select">
+  <input type="search" name="q" value="{{ q }}" placeholder="レシピ名・IDで探す" aria-label="検索する言葉">
+  <select name="kind" aria-label="区分">
+    <option value="">すべての区分</option>
+    {% for value, label in kinds %}<option value="{{ value }}" {% if kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="type" aria-label="種類">
+    <option value="">すべての種類</option>
+    {% for value, label in types %}<option value="{{ value }}" {% if type == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="state" aria-label="状態">
+    <option value="" {% if not state %}selected{% endif %}>使用中＋下書き</option>
+    <option value="in_use" {% if state == "in_use" %}selected{% endif %}>使用中のみ</option>
+    <option value="draft" {% if state == "draft" %}selected{% endif %}>下書きのみ</option>
+    <option value="stopped" {% if state == "stopped" %}selected{% endif %}>使用停止</option>
+    <option value="all" {% if state == "all" %}selected{% endif %}>すべて</option>
+  </select>
+  <noscript><button class="btn">絞り込む</button></noscript>
+</form>
+
+<div id="results">{% include "bakery/recipes/_list_results.html" %}</div>
+{% endblock %}

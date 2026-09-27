@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}レシピを作る{% endblock %}
+{% block content %}
+<section class="narrow">
+  <h1>レシピを作る</h1>
+  <form method="post" class="card stack" novalidate data-once id="recipe-new">
+    {% csrf_token %}
+    <fieldset class="choice-row">
+      <legend>作り方</legend>
+      {% for radio in form.mode %}<label class="choice">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}
+    </fieldset>
+
+    <div class="js-mode-copy stack">
+      <label class="field" for="id_source"><span>コピー元のレシピ</span>
+        <select name="source" id="id_source">
+          <option value="">コピー元のレシピを選んでください</option>
+          {% regroup form.fields.source.queryset by get_kind_display as groups %}
+          {% for g in groups %}<optgroup label="{{ g.grouper }}">
+            {% for r in g.list %}<option value="{{ r.pk }}" data-name="{{ r.name }}" {% if form.source.value|stringformat:"s" == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.code }} {{ r.name }}（v{{ r.version }}）{% if r.status == 'stopped' %}［使用停止］{% endif %}</option>{% endfor %}
+          </optgroup>{% endfor %}
+        </select></label>
+      {% if form.errors.source %}<div class="field-error" role="alert">{{ form.errors.source.0 }}</div>{% endif %}
+      <p class="hint">コピー元は変更されません。新しいレシピIDが発行されます。同じ名前にするとバージョンが1つ上がります。</p>
+    </div>
+
+    <div class="js-mode-new stack">
+      <fieldset class="choice-row">
+        <legend>レシピ区分</legend>
+        {% for radio in form.kind %}<label class="choice">{{ radio.tag }} {{ radio.choice_label }}</label>{% endfor %}
+      </fieldset>
+      {% if form.errors.kind %}<div class="field-error" role="alert">{{ form.errors.kind.0 }}</div>{% endif %}
+      <p class="hint">中間レシピ：生地・クリームなど、ほかのレシピの材料になるもの（歩留まり98%）。<br>最終商品レシピ：商品1個分の構成（歩留まりなし）。</p>
+
+      <div class="js-kind-intermediate stack">
+        <label class="field" for="id_recipe_type"><span>中間レシピの種類</span>{{ form.recipe_type }}</label>
+        {% if form.errors.recipe_type %}<div class="field-error" role="alert">{{ form.errors.recipe_type.0 }}</div>{% endif %}
+      </div>
+    </div>
+
+    <label class="field" for="id_name"><span>レシピ名</span>{{ form.name }}</label>
+    {% if form.errors.name %}<div class="field-error" role="alert">{{ form.errors.name.0 }}</div>{% endif %}
+    <p class="hint">レシピ名に「Ver.2」などは入れません。バージョンは自動で付きます。</p>
+
+    <button class="btn btn-primary btn-block">作って材料を追加する</button>
+  </form>
+</section>
+<script>
+  // 選んだ作り方・区分に合わせて、関係する欄だけを表示する
+  (function () {
+    const form = document.getElementById("recipe-new");
+    function sync() {
+      const mode = form.querySelector("input[name=mode]:checked")?.value || "new";
+      const kind = form.querySelector("input[name=kind]:checked")?.value;
+      form.querySelector(".js-mode-copy").hidden = mode !== "copy";
+      form.querySelector(".js-mode-new").hidden = mode === "copy";
+      form.querySelector(".js-kind-intermediate").hidden = kind !== "intermediate";
+    }
+    form.addEventListener("change", sync);
+    const source = form.querySelector("#id_source");
+    source.addEventListener("change", () => {
+      const name = form.querySelector("#id_name");
+      if (!name.value && source.selectedOptions[0]?.dataset.name) name.value = source.selectedOptions[0].dataset.name;
+    });
+    sync();
+  })();
+</script>
+{% endblock %}

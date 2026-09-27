@@ -1,0 +1,45 @@
+{% load bakery_format %}
+<p class="muted count">{{ page.paginator.count }} 件<span class="small">（税込は{{ tax_rate|rate_percent }}%・切り捨て）</span></p>
+{% if page.object_list %}
+<table class="table only-wide">
+  <thead><tr>
+    <th>商品ID</th><th>商品名</th><th class="num">税抜売価</th><th class="num">税込売価</th>
+    <th class="num">原価</th><th class="num">原価率</th><th>採用レシピ</th><th></th>
+  </tr></thead>
+  <tbody>
+  {% for pc in page.object_list %}{% with p=pc.product %}
+    <tr class="{% if p.status == 'stopped' %}stopped{% endif %}">
+      <td class="code"><a href="{% url 'product_detail' p.pk %}">{{ p.code }}</a></td>
+      <td><a href="{% url 'product_detail' p.pk %}">{{ p.name }}</a>{% if p.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</td>
+      <td class="num">{{ p.price_excluding_tax|yen }} 円</td>
+      <td class="num">{{ pc.price_including_tax|yen }} 円</td>
+      <td class="num">{% if pc.cost is not None %}{{ pc.cost|cost:1 }} 円{% else %}—{% endif %}</td>
+      <td class="num strong">{% if pc.rate is not None %}{{ pc.rate|percent }}%{% else %}—{% endif %}</td>
+      <td>{% if p.adopted_recipe %}<span class="code small">{{ p.adopted_recipe.code }}</span> {{ p.adopted_recipe.name }} <span class="muted">v{{ p.adopted_recipe.version }}</span>{% else %}<span class="warn">未設定</span>{% endif %}</td>
+      <td>{% if pc.has_unconfirmed_allergen %}<span class="warn small">アレルゲン未確認あり</span>{% elif pc.error and p.adopted_recipe %}<span class="warn small">計算できません</span>{% endif %}</td>
+    </tr>
+  {% endwith %}{% endfor %}
+  </tbody>
+</table>
+
+<ul class="cards only-narrow">
+  {% for pc in page.object_list %}{% with p=pc.product %}
+  <li><a class="item-card {% if p.status == 'stopped' %}stopped{% endif %}" href="{% url 'product_detail' p.pk %}">
+    <span class="line1"><span class="code">{{ p.code }}</span>{% if p.status == 'stopped' %}<span class="badge">使用停止</span>{% endif %}{% if pc.has_unconfirmed_allergen %}<span class="warn">アレルゲン未確認あり</span>{% endif %}</span>
+    <span class="name">{{ p.name }}</span>
+    <span class="line3"><span class="muted">税抜 {{ p.price_excluding_tax|yen }}円（税込 {{ pc.price_including_tax|yen }}円）</span></span>
+    <span class="line3"><span class="muted">原価 {% if pc.cost is not None %}{{ pc.cost|cost:1 }}円{% else %}{% if p.adopted_recipe %}計算できません{% else %}レシピ未設定{% endif %}{% endif %}</span><span class="num strong">{% if pc.rate is not None %}原価率 {{ pc.rate|percent }}%{% endif %}</span></span>
+  </a></li>
+  {% endwith %}{% endfor %}
+</ul>
+
+{% if page.has_other_pages %}
+<nav class="pager" aria-label="ページ">
+  {% if page.has_previous %}<a class="btn" href="?{{ query_without_page }}&page={{ page.previous_page_number }}">← 前へ</a>{% endif %}
+  <span class="muted">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?{{ query_without_page }}&page={{ page.next_page_number }}">次へ →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="empty">当てはまる商品がありません。{% if request.membership.is_admin %}<a href="{% url 'product_new' %}">商品を登録する</a>{% endif %}</p>
+{% endif %}

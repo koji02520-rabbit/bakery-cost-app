@@ -1,0 +1,16 @@
+{% load bakery_format %}
+<table class="table agg">
+  <thead><tr><th>材料</th><th class="num">合計使用量</th><th class="num">原価</th></tr></thead>
+  <tbody>
+  {% for a in v.aggregated %}
+    <tr>
+      <td><span class="tag {% if a.kind != 'ingredient' %}tag-recipe{% endif %}">{% if a.kind == 'ingredient' %}食材{% else %}中間{% endif %}</span> {{ a.material.name }}</td>
+      <td class="num">{{ a.quantity_g|grams }} g</td>
+      <td class="num">{{ a.cost|cost }} 円</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="3" class="muted">{% if v.error %}原価を計算できないため表示できません{% else %}まだ材料がありません{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="hint">同じ材料が複数の行にある場合は、ここで合計しています（レシピの行はそのままです）。</p>

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}商品原価{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>商品原価</h1>
+  {% if request.membership.is_admin %}<a class="btn btn-primary" href="{% url 'product_new' %}">＋ 商品を登録する</a>{% endif %}
+</div>
+
+<form class="filters filters-3 card" method="get"
+      hx-get="{% url 'product_list' %}" hx-target="#results" hx-push-url="true"
+      hx-trigger="input changed delay:300ms from:input[name=q], change from:select">
+  <input type="search" name="q" value="{{ q }}" placeholder="商品名・IDで探す" aria-label="検索する言葉">
+  <select name="sort" aria-label="並び順">
+    {% for value, label in sorts %}<option value="{{ value }}" {% if sort == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="status" aria-label="使用状態">
+    <option value="active" {% if status == "active" %}selected{% endif %}>使用中</option>
+    <option value="stopped" {% if status == "stopped" %}selected{% endif %}>使用停止</option>
+    <option value="all" {% if status == "all" %}selected{% endif %}>すべて</option>
+  </select>
+  <noscript><button class="btn">絞り込む</button></noscript>
+</form>
+
+<div id="results">{% include "bakery/products/_list_results.html" %}</div>
+{% endblock %}

@@ -1,0 +1,9 @@
+<div class="recipe-head">
+  <p class="code muted">{{ recipe.code }}</p>
+  <h1>{{ recipe.name }} <span class="version">v{{ recipe.version }}</span></h1>
+  <p class="meta">
+    <span class="tag">{{ recipe.get_kind_display }}{% if recipe.recipe_type %}・{{ recipe.get_recipe_type_display }}{% endif %}</span>
+    {% if recipe.status == 'stopped' %}<span class="badge">使用停止</span>{% elif in_use %}<span class="badge badge-on">使用中</span>{% else %}<span class="badge badge-draft">下書き</span>{% endif %}
+    {% if recipe.copied_from %}<span class="muted small">コピー元：<a href="{% url 'recipe_detail' recipe.copied_from.pk %}">{{ recipe.copied_from.code }}（v{{ recipe.copied_from.version }}）</a></span>{% endif %}
+  </p>
+</div>

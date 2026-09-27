@@ -1,0 +1,42 @@
+{% load bakery_format %}
+<p class="muted count">{{ page.paginator.count }} 件</p>
+{% if page.object_list %}
+<table class="table only-wide">
+  <thead><tr><th></th><th>レシピID</th><th>レシピ名</th><th>区分・種類</th><th>状態</th><th class="num">原価</th><th></th></tr></thead>
+  <tbody>
+  {% for r in page.object_list %}
+    <tr class="{% if r.status == 'stopped' %}stopped{% endif %}">
+      <td class="thumb-cell">{% include "bakery/recipes/_thumb.html" %}</td>
+      <td class="code"><a href="{% url 'recipe_detail' r.pk %}">{{ r.code }}</a></td>
+      <td><a href="{% url 'recipe_detail' r.pk %}">{{ r.name }}</a> <span class="muted">v{{ r.version }}</span></td>
+      <td>{{ r.get_kind_display }}{% if r.recipe_type %}・{{ r.get_recipe_type_display }}{% endif %}</td>
+      <td>{% include "bakery/recipes/_state_badge.html" %}</td>
+      <td class="num">{% include "bakery/recipes/_list_cost.html" %}</td>
+      <td>{% if r.costs and r.costs.2 %}<span class="warn">アレルゲン未確認あり</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<ul class="cards only-narrow">
+  {% for r in page.object_list %}
+  <li><a class="item-card with-thumb {% if r.status == 'stopped' %}stopped{% endif %}" href="{% url 'recipe_detail' r.pk %}">
+    {% include "bakery/recipes/_thumb.html" %}<span class="item-body">
+    <span class="line1"><span class="code">{{ r.code }}</span>{% include "bakery/recipes/_state_badge.html" %}</span>
+    <span class="name">{{ r.name }} <span class="muted">v{{ r.version }}</span></span>
+    <span class="line3"><span class="muted">{{ r.get_kind_display }}{% if r.recipe_type %}・{{ r.get_recipe_type_display }}{% endif %}</span><span class="num">{% include "bakery/recipes/_list_cost.html" %}</span></span>
+    {% if r.costs and r.costs.2 %}<span class="warn small">アレルゲン未確認の材料あり</span>{% endif %}
+  </span></a></li>
+  {% endfor %}
+</ul>
+
+{% if page.has_other_pages %}
+<nav class="pager" aria-label="ページ">
+  {% if page.has_previous %}<a class="btn" href="?{{ query_without_page }}&page={{ page.previous_page_number }}">← 前へ</a>{% endif %}
+  <span class="muted">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?{{ query_without_page }}&page={{ page.next_page_number }}">次へ →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="empty">当てはまるレシピがありません。<a href="{% url 'recipe_new' %}">レシピを作る</a></p>
+{% endif %}

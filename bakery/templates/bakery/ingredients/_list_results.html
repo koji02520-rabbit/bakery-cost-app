@@ -1,0 +1,44 @@
+{% load bakery_format %}
+<p class="muted count">{{ page.paginator.count }} 件</p>
+{% if page.object_list %}
+<table class="table only-wide">
+  <thead><tr>
+    <th>食材ID</th><th>食材名</th><th>カテゴリー</th><th>仕入先</th>
+    <th class="num">購入重量</th><th class="num">購入価格</th><th class="num">1g単価</th><th>アレルゲン</th>
+  </tr></thead>
+  <tbody>
+  {% for i in page.object_list %}
+    <tr class="{% if i.status == 'stopped' %}stopped{% endif %}">
+      <td class="code"><a href="{% url 'ingredient_detail' i.pk %}">{{ i.code }}</a></td>
+      <td><a href="{% url 'ingredient_detail' i.pk %}">{{ i.name }}</a>{% if i.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</td>
+      <td>{{ i.category.name }}</td>
+      <td>{{ i.supplier.name }}</td>
+      <td class="num">{{ i.purchase_weight_g|grams }} g</td>
+      <td class="num">{{ i.purchase_price|yen }} 円</td>
+      <td class="num">{{ i.unit_price|yen_per_g }} 円</td>
+      <td>{% if i.allergen_confirmed %}確認済み{% else %}<span class="warn">未確認</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<ul class="cards only-narrow">
+  {% for i in page.object_list %}
+  <li><a class="item-card {% if i.status == 'stopped' %}stopped{% endif %}" href="{% url 'ingredient_detail' i.pk %}">
+    <span class="line1"><span class="code">{{ i.code }}</span>{% if not i.allergen_confirmed %}<span class="warn">アレルゲン未確認</span>{% endif %}{% if i.status == 'stopped' %}<span class="badge">使用停止</span>{% endif %}</span>
+    <span class="name">{{ i.name }}</span>
+    <span class="line3"><span class="muted">{{ i.category.name }}／{{ i.supplier.name }}</span><span class="num">{{ i.unit_price|yen_per_g }} 円/g</span></span>
+  </a></li>
+  {% endfor %}
+</ul>
+
+{% if page.has_other_pages %}
+<nav class="pager" aria-label="ページ">
+  {% if page.has_previous %}<a class="btn" href="?{{ query_without_page }}&page={{ page.previous_page_number }}">← 前へ</a>{% endif %}
+  <span class="muted">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?{{ query_without_page }}&page={{ page.next_page_number }}">次へ →</a>{% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p class="empty">当てはまる食材がありません。{% if request.membership.is_admin %}<a href="{% url 'ingredient_new' %}">食材を登録する</a>{% endif %}</p>
+{% endif %}

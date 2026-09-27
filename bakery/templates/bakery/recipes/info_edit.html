@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}レシピ情報の修正{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="muted"><span class="code">{{ recipe.code }}</span> v{{ recipe.version }}</p>
+  <h1>レシピの名前・作り方を修正する</h1>
+  <form method="post" class="card stack" novalidate data-once>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
+    {% for field in form %}
+    <label class="field" for="{{ field.id_for_label }}"><span>{{ field.label }}{% if not field.field.required %}（任意）{% endif %}</span>{{ field }}</label>
+    {% if field.errors %}<div class="field-error" role="alert">{{ field.errors.0 }}</div>{% endif %}
+    {% endfor %}
+    {% if lock_type and recipe.is_intermediate %}<p class="hint">使用中のため、中間レシピの種類（{{ recipe.get_recipe_type_display }}）は変更できません。</p>{% endif %}
+    <p class="hint">ここで変えられるのは原価に影響しない項目です。使用中のレシピでも修正でき、修正前後の内容は変更履歴に残ります。</p>
+    <div class="button-row">
+      <a class="btn" href="{% if next == 'edit' %}{% url 'recipe_edit' recipe.pk %}{% else %}{% url 'recipe_detail' recipe.pk %}{% endif %}">やめる</a>
+      <button class="btn btn-primary">保存する</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

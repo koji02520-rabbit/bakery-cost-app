@@ -1,0 +1,20 @@
+{% load bakery_format %}
+<p class="muted count">{{ page.paginator.count }} 件</p>
+<ul class="cards">
+  {% for i in page.object_list %}
+  <li><a class="item-card {% if i.status == 'stopped' %}stopped{% endif %}" href="{% url 'price_change_edit' i.pk %}">
+    <span class="line1"><span class="code">{{ i.code }}</span>{% if i.status == 'stopped' %}<span class="badge">使用停止</span>{% endif %}</span>
+    <span class="name">{{ i.name }}</span>
+    <span class="line3"><span class="muted">{{ i.supplier.name }}／{{ i.purchase_weight_g|grams }}g {{ i.purchase_price|yen }}円</span><span class="num">{{ i.unit_price|yen_per_g }} 円/g</span></span>
+  </a></li>
+  {% empty %}
+  <li class="empty">当てはまる食材がありません</li>
+  {% endfor %}
+</ul>
+{% if page.has_other_pages %}
+<nav class="pager" aria-label="ページ">
+  {% if page.has_previous %}<a class="btn" href="?{{ query_without_page }}&page={{ page.previous_page_number }}">← 前へ</a>{% endif %}
+  <span class="muted">{{ page.number }} / {{ page.paginator.num_pages }}</span>
+  {% if page.has_next %}<a class="btn" href="?{{ query_without_page }}&page={{ page.next_page_number }}">次へ →</a>{% endif %}
+</nav>
+{% endif %}

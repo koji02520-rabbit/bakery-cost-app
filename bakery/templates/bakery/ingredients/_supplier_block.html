@@ -1,0 +1,24 @@
+<div id="supplier-block" class="stack-tight">
+  <label class="field" for="id_supplier"><span>仕入先</span>
+    <select name="supplier" id="id_supplier">
+      <option value="">選んでください</option>
+      {% for s in form.fields.supplier.queryset %}<option value="{{ s.pk }}" {% if selected_supplier == s.pk|stringformat:"s" %}selected{% endif %}>{{ s.name }}</option>{% endfor %}
+    </select>
+  </label>
+  {% if added %}<p class="ok" role="status">仕入先「{{ added.name }}」を登録して選びました（{{ added.code }}）</p>{% endif %}
+  <details class="inline-add" {% if supplier_form %}open{% endif %}>
+    <summary>一覧にない仕入先を登録する</summary>
+    <div class="inline-add-body">
+      <label class="field" for="id_supplier_name"><span>新しい仕入先名</span>
+        <input type="text" name="supplier_name" id="id_supplier_name" maxlength="100" autocomplete="off"
+               value="{{ supplier_form.supplier_name.value|default:'' }}"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();this.closest('#supplier-block').querySelector('.js-add-supplier').click();}">
+      </label>
+      {% if supplier_form.errors.supplier_name %}<div class="field-error" role="alert">{{ supplier_form.errors.supplier_name.0 }}</div>{% endif %}
+      <button type="button" class="btn js-add-supplier"
+              hx-post="{% url 'supplier_quick_add' %}" hx-include="#id_supplier_name, #id_supplier"
+              hx-target="#supplier-block" hx-swap="outerHTML">この名前で仕入先を登録する</button>
+      <p class="hint">担当者・電話番号などは、あとで管理者メニューから登録できます</p>
+    </div>
+  </details>
+</div>

@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}{{ recipe.name }}{% endblock %}
+{% block content %}
+{% with admin=request.membership.is_admin %}
+<p><a class="linklike" href="{% url 'recipe_list' %}">← レシピ一覧</a></p>
+<div class="detail-top">
+<div class="detail-top-main">
+  {% include "bakery/recipes/_header.html" %}
+  <div class="button-row compact">
+    {% if in_use %}
+      <form method="post" action="{% url 'recipe_new_version' recipe.pk %}" data-once>{% csrf_token %}<button class="btn btn-primary">新しいバージョンを作る</button></form>
+      <a class="btn" href="{% url 'recipe_edit' recipe.pk %}">工程・並び順</a>
+    {% else %}
+      <a class="btn btn-primary" href="{% url 'recipe_edit' recipe.pk %}">材料を編集する</a>
+    {% endif %}
+    <a class="btn" href="{% url 'recipe_new' %}?copy={{ recipe.pk }}">コピーして作る</a>
+  </div>
+</div>
+{% include "bakery/photos/_panel.html" %}
+</div>
+
+{% if newer %}
+<p class="msg-inline msg-info">このレシピには新しいバージョンがあります：<a href="{% url 'recipe_detail' newer.pk %}">{{ newer.code }}（v{{ newer.version }}）</a></p>
+{% endif %}
+{% if v.error %}<p class="msg-inline msg-error" role="alert">{{ v.error }}</p>{% endif %}
+
+
+<div class="grid-2">
+  <section class="card">
+    <h2>原価</h2>
+    <dl class="summary">
+      <div><dt>仕込み量</dt><dd class="num">{% if v.cost %}{{ v.cost.total_weight_g|grams }} g{% else %}—{% endif %}</dd></div>
+      <div><dt>歩留まり</dt><dd class="num">{{ recipe.yield_rate|rate_percent }}%{% if v.is_final %} <span class="muted small">（最終商品レシピは適用しない）</span>{% endif %}</dd></div>
+      <div><dt>出来上がり量</dt><dd class="num">{% if v.cost %}{{ v.cost.finished_weight_g|grams }} g{% else %}—{% endif %}</dd></div>
+      {% if v.is_final %}<div><dt>原価（商品1個）<br><span class="hint">小数第1位へ切り上げ</span></dt><dd class="num strong">{% if v.product_cost is not None %}{{ v.product_cost|cost:1 }} 円{% else %}—{% endif %}</dd></div>
+      {% else %}<div><dt>原価合計</dt><dd class="num strong">{% if v.cost %}{{ v.cost.total_cost|cost }} 円{% else %}—{% endif %}</dd></div>{% endif %}
+      {% if not v.is_final %}<div><dt>1g原価</dt><dd class="num strong">{% if v.cost and v.cost.cost_per_g is not None %}{{ v.cost.cost_per_g|yen_per_g }} 円/g{% else %}—{% endif %}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>アレルゲン</h2>
+    {% if v.unconfirmed_sources %}
+      <p class="warn">アレルゲン未確認の材料があります</p>
+      <ul class="plain small">{% for s in v.unconfirmed_sources %}<li>{{ s }}</li>{% endfor %}</ul>
+    {% endif %}
+    {% if v.allergens %}
+      <ul class="allergen-list">
+        {% for a in v.allergens %}
+        <li><span class="chip {% if a.item.is_mandatory %}chip-strong{% endif %}">{{ a.item.name }}</span>
+          <span class="muted small">由来：{{ a.sources|join:"、" }}</span></li>
+        {% endfor %}
+      </ul>
+    {% elif v.cost and not v.unconfirmed_sources %}
+      <p>アレルゲンなし</p>
+    {% elif not v.cost %}
+      <p class="muted">—</p>
+    {% else %}
+      <p class="muted">確認済みの材料にはアレルゲンはありません（未確認の材料を確認してください）</p>
+    {% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>材料</h2>
+    <div class="toggle small">
+      <a href="?" class="{% if not show_total %}on{% endif %}">行ごと</a>
+      <a href="?view=total" class="{% if show_total %}on{% endif %}">材料ごとに合計</a>
+    </div>
+  </div>
+  {% if show_total %}
+    {% include "bakery/recipes/_aggregated.html" %}
+  {% else %}
+  <table class="table">
+    <thead><tr><th>工程</th><th>材料</th><th class="num">使用量</th><th class="num only-wide-cell">単価</th><th class="num">原価</th></tr></thead>
+    <tbody>
+    {% for r in v.rows %}
+      <tr>
+        <td>{{ r.item.step_label|default:"—" }}</td>
+        <td><span class="tag {% if not r.is_ingredient %}tag-recipe{% endif %}">{% if r.is_ingredient %}食材{% else %}中間{% endif %}</span>
+          {% if r.is_ingredient %}<a href="{% url 'ingredient_detail' r.material.pk %}">{{ r.material.name }}</a>{% else %}<a href="{% url 'recipe_detail' r.material.pk %}">{{ r.material.name }}</a> <span class="muted">v{{ r.material.version }}</span>{% endif %}
+          {% if r.material_stopped %}<span class="badge">使用停止</span>{% endif %}</td>
+        <td class="num">{{ r.item.quantity_g|grams }} g</td>
+        <td class="num only-wide-cell">{% if r.unit_price is not None %}{{ r.unit_price|yen_per_g }}{% else %}—{% endif %}</td>
+        <td class="num">{% if r.cost is not None %}{{ r.cost|cost }} 円{% else %}—{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">まだ材料がありません</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</section>
+
+{% include "bakery/nutrition/_recipe_card.html" %}
+
+<section class="card">
+  <div class="card-head">
+    <h2>作り方</h2>
+    <a class="btn" href="{% url 'recipe_info_edit' recipe.pk %}">修正する</a>
+  </div>
+  <dl class="prose-list">
+    <dt>下処理</dt><dd class="pre">{{ recipe.preparation|default:"—" }}</dd>
+    <dt>手順</dt><dd class="pre">{{ recipe.procedure|default:"—" }}</dd>
+    <dt>メモ</dt><dd class="pre">{{ recipe.memo|default:"—" }}</dd>
+  </dl>
+</section>
+
+<section class="card">
+  <h2>このレシピを使っているもの</h2>
+  {% if products or used_in %}
+  <ul class="result-list">
+    {% for p in products %}<li><a href="{% url 'product_detail' p.pk %}"><span class="tag">商品</span> <span class="code">{{ p.code }}</span> {{ p.name }}</a></li>{% endfor %}
+    {% for r in used_in %}<li><a href="{% url 'recipe_detail' r.pk %}"><span class="tag">{{ r.get_kind_display }}</span> <span class="code">{{ r.code }}</span> {{ r.name }} <span class="muted">v{{ r.version }}</span></a></li>{% endfor %}
+  </ul>
+  {% else %}
+  <p class="muted">どの商品・レシピにも使われていません（下書き）</p>
+  {% endif %}
+  <p class="hint">作成：{{ recipe.created_by.get_username|default:"—" }}（{{ recipe.created_at|date:"Y/m/d H:i" }}）／更新：{{ recipe.updated_by.get_username|default:"—" }}（{{ recipe.updated_at|date:"Y/m/d H:i" }}）</p>
+</section>
+
+{% if admin %}
+<section class="card danger-zone">
+  <h2>管理者の操作</h2>
+  {% if recipe.is_intermediate and used_in %}
+    <a class="btn" href="{% url 'recipe_replace' %}?old={{ recipe.pk }}{% if newer %}&new={{ newer.pk }}{% endif %}">このレシピを別のバージョンに置き換える</a>
+  {% endif %}
+  {% if recipe.status == 'active' %}
+    <form method="post" action="{% url 'recipe_set_status' recipe.pk %}" onsubmit="return confirm('{{ recipe.name|escapejs }}（v{{ recipe.version }}）を使用停止にしますか？{% if in_use %}\n使用中ですが、今の商品・レシピはそのまま残ります。{% endif %}')">
+      {% csrf_token %}<input type="hidden" name="status" value="stopped">
+      <button class="btn">使用停止にする</button>
+    </form>
+    <p class="hint">使用停止にすると、新しく材料や採用レシピとして選べなくなります。</p>
+  {% else %}
+    <form method="post" action="{% url 'recipe_set_status' recipe.pk %}">
+      {% csrf_token %}<input type="hidden" name="status" value="active">
+      <button class="btn">使用を再開する</button>
+    </form>
+  {% endif %}
+  {% if v.is_final and recipe.status == 'active' and v.rows %}<a class="btn" href="{% url 'product_new' %}?recipe={{ recipe.pk }}">このレシピで商品を登録する</a>{% endif %}
+  {% if not in_use %}<a class="btn btn-danger-outline" href="{% url 'recipe_delete' recipe.pk %}">削除する</a>{% endif %}
+</section>
+{% endif %}
+{% endwith %}
+{% endblock %}

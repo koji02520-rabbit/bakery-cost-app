@@ -1,0 +1,5 @@
+{% load bakery_format %}<tr><th>熱量</th>{% for n in columns %}<td class="num">{{ n.energy_kcal|cost:1 }} kcal</td>{% endfor %}</tr>
+<tr><th>たんぱく質</th>{% for n in columns %}<td class="num">{{ n.protein_g|cost:1 }} g</td>{% endfor %}</tr>
+<tr><th>脂質</th>{% for n in columns %}<td class="num">{{ n.fat_g|cost:1 }} g</td>{% endfor %}</tr>
+<tr><th>炭水化物</th>{% for n in columns %}<td class="num">{{ n.carbohydrate_g|cost:1 }} g</td>{% endfor %}</tr>
+<tr><th>食塩相当量</th>{% for n in columns %}<td class="num">{{ n.salt_g|cost:2 }} g</td>{% endfor %}</tr>

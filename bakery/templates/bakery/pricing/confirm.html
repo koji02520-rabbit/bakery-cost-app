@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}価格変更の影響確認{% endblock %}
+{% block content %}
+<section class="narrow wide-ok">
+  <p class="steps"><span>1 食材を選ぶ</span><span>2 新しい価格</span><span class="on">3 影響確認</span></p>
+  <p class="muted"><span class="code">{{ ingredient.code }}</span> {{ ingredient.supplier.name }}</p>
+  <h1>{{ ingredient.name }} の価格を変更しますか？</h1>
+
+  {% if error %}<p class="msg-inline msg-error" role="alert">{{ error }}</p>{% endif %}
+
+  <section class="card">
+    <h2>価格</h2>
+    <table class="table compare">
+      <thead><tr><th></th><th class="num">変更前</th><th class="num">変更後</th><th class="num">差額</th></tr></thead>
+      <tbody>
+        <tr><th>購入重量</th><td class="num">{{ impact.old_weight|grams }} g</td><td class="num">{{ impact.new_weight|grams }} g</td><td></td></tr>
+        <tr><th>購入価格</th><td class="num">{{ impact.old_price|yen }} 円</td><td class="num strong">{{ impact.new_price|yen }} 円</td>
+          <td class="num {% if impact.price_diff > 0 %}warn{% endif %}">{{ impact.price_diff|signed_cost }} 円</td></tr>
+        <tr><th>1g単価</th><td class="num">{{ impact.old_unit_price|yen_per_g }}</td><td class="num strong">{{ impact.new_unit_price|yen_per_g }}</td>
+          <td class="num {% if impact.unit_price_diff > 0 %}warn{% endif %}">{% if impact.unit_price_diff > 0 %}+{% endif %}{{ impact.unit_price_diff|yen_per_g }}</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="card">
+    <h2>影響する商品（{{ impact.products|length }} 件）</h2>
+    {% if impact.products %}
+    <table class="table">
+      <thead><tr><th>商品</th><th class="num">変更前原価</th><th class="num">変更後原価</th><th class="num">原価差額</th><th class="num">原価率</th></tr></thead>
+      <tbody>
+      {% for p in impact.products %}
+        <tr>
+          <td><span class="code">{{ p.product.code }}</span> {{ p.product.name }}</td>
+          <td class="num">{{ p.before_cost|cost:1 }} 円</td>
+          <td class="num">{{ p.after_cost|cost:1 }} 円</td>
+          <td class="num {% if p.diff > 0 %}warn{% endif %}">{{ p.diff|signed_cost:1 }} 円</td>
+          <td class="num">{% if p.before_rate is not None %}{{ p.before_rate|percent }}% → {{ p.after_rate|percent }}%{% else %}—{% endif %}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="muted">この食材を使っている商品はありません。</p>
+    {% endif %}
+
+    {% if impact.recipes %}
+    <details class="more">
+      <summary>影響するレシピ（{{ impact.recipes|length }} 件）</summary>
+      <table class="table">
+        <thead><tr><th>レシピ</th><th class="num">変更前</th><th class="num">変更後</th></tr></thead>
+        <tbody>
+        {% for r in impact.recipes %}
+          <tr>
+            <td><span class="tag {% if r.recipe.is_intermediate %}tag-recipe{% endif %}">{% if r.recipe.is_intermediate %}中間{% else %}最終{% endif %}</span> <span class="code">{{ r.recipe.code }}</span> {{ r.recipe.name }} <span class="muted">v{{ r.recipe.version }}</span></td>
+            {% if r.recipe.is_intermediate %}
+            <td class="num">{{ r.before|yen_per_g }} 円/g</td><td class="num">{{ r.after|yen_per_g }} 円/g</td>
+            {% else %}
+            <td class="num">{{ r.before|cost:1 }} 円</td><td class="num">{{ r.after|cost:1 }} 円</td>
+            {% endif %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </details>
+    {% endif %}
+  </section>
+
+  <form method="post" action="{% url 'price_change_edit' ingredient.pk %}" class="button-row" data-once>
+    {% csrf_token %}
+    <input type="hidden" name="purchase_weight_g" value="{{ impact.new_weight|stringformat:'s' }}">
+    <input type="hidden" name="purchase_price" value="{{ impact.new_price|stringformat:'s' }}">
+    <input type="hidden" name="seen_weight" value="{{ impact.old_weight|stringformat:'s' }}">
+    <input type="hidden" name="seen_price" value="{{ impact.old_price|stringformat:'s' }}">
+    <button name="step" value="back" class="btn">← 戻って修正する</button>
+    <button name="step" value="commit" class="btn btn-primary">この価格に変更する</button>
+  </form>
+  <p class="hint">確定するとすぐに反映され、価格履歴・変更履歴と、影響する商品のその時点の原価が記録されます。</p>
+</section>
+{% endblock %}

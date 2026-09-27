@@ -1,0 +1,19 @@
+{% load bakery_format %}
+<section class="card">
+  <h2>栄養成分</h2>
+  {% if v.nutrition %}
+    {% include "bakery/nutrition/_missing.html" with missing=v.nutrition_missing %}
+    <table class="table compare">
+      {% if v.is_final %}
+      <thead><tr><th></th><th class="num">1個あたり（{{ v.nutrition.total_weight_g|grams }}g）</th></tr></thead>
+      <tbody>{% include "bakery/nutrition/_rows.html" with columns=v.nutrition_columns %}</tbody>
+      {% else %}
+      <thead><tr><th></th><th class="num">100gあたり</th><th class="num">全量（出来上がり {{ v.nutrition.finished_weight_g|grams }}g）</th></tr></thead>
+      <tbody>{% include "bakery/nutrition/_rows.html" with columns=v.nutrition_columns %}</tbody>
+      {% endif %}
+    </table>
+    <p class="hint">{% if v.is_final %}材料の栄養の合計です。{% else %}材料の栄養の合計 ÷ 出来上がり量（歩留まり{{ recipe.yield_rate|rate_percent }}%）で計算しています。{% endif %}</p>
+  {% else %}
+    <p class="muted">材料がないため計算できません</p>
+  {% endif %}
+</section>

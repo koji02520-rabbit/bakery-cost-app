@@ -1,0 +1,4 @@
+{% for name in form.FIELD_ORDER %}
+<div id="err-{{ name }}" class="field-error" role="alert" hx-swap-oob="true">{% for k, v in fb.errors.items %}{% if k == name %}{{ v }}{% endif %}{% endfor %}</div>
+{% endfor %}
+{% include "bakery/ingredients/_step1_auto.html" with oob=True %}

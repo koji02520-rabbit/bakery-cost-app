@@ -1,0 +1,44 @@
+{% load static %}<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{% endblock %} | 原価管理</title>
+  <link rel="stylesheet" href="{% static 'bakery/app.css' %}">
+  <script src="{% static 'bakery/vendor/htmx.min.js' %}" defer></script>
+  <script src="{% static 'bakery/app.js' %}" defer></script>
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% if user.is_authenticated and request.membership %}
+  <header class="topbar">
+    <a class="brand" href="{% url 'home' %}">原価管理</a>
+    <nav class="tabs" aria-label="メニュー">
+      {% with section=request.resolver_match.url_name|default:"" %}
+      <a href="{% url 'home' %}" class="{% if section == 'home' %}on{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>ホーム</a>
+      <a href="{% url 'ingredient_list' %}" class="{% if 'ingredient' in section or 'supplier' in section or 'price' in section %}on{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7zM9 8V6a3 3 0 0 1 6 0v2"/></svg>食材</a>
+      <a href="{% url 'recipe_list' %}" class="{% if 'recipe' in section %}on{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h10l3 3v15H6zM9 9h7M9 13h7M9 17h4"/></svg>レシピ</a>
+      <a href="{% url 'product_list' %}" class="{% if 'product' in section %}on{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10c0-4 4-6 8-6s8 2 8 6v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/></svg>商品</a>
+      {% endwith %}
+    </nav>
+    <div class="account">
+      <span class="who">{{ user.get_username }}{% if request.membership.is_admin %}（管理者）{% endif %}</span>
+      {% if request.membership.is_admin %}<a href="{% url 'admin:index' %}">管理者メニュー</a>{% endif %}
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="linklike">ログアウト</button></form>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="page">
+    {% if messages %}
+    <div class="messages">
+      {% for m in messages %}<p class="msg msg-{{ m.tags }}" role="status">{{ m }}</p>{% endfor %}
+    </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

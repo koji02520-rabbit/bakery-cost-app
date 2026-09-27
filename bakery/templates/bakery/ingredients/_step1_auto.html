@@ -1,0 +1,9 @@
+{% load bakery_format %}
+<dl class="auto-values" id="auto-values" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <div><dt>食材ID（自動）</dt><dd class="code">{{ fb.preview_code|default:"カテゴリーを選ぶと表示されます" }}</dd></div>
+  <div><dt>1gあたり価格（自動）</dt><dd class="num">{% if fb.preview_unit_price is not None %}{{ fb.preview_unit_price|yen_per_g }} 円/g{% else %}重量と価格を入れると表示されます{% endif %}</dd></div>
+</dl>
+<div id="submit-area" class="submit-area" {% if oob %}hx-swap-oob="true"{% endif %}>
+  <button type="submit" form="step1" name="step" value="confirm" class="btn btn-primary btn-block" {% if not fb.can_submit %}disabled{% endif %}>登録する</button>
+  {% if not fb.can_submit %}<p class="hint center">必要な項目をすべて入力すると押せるようになります</p>{% endif %}
+</div>

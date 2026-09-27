@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}レシピの削除{% endblock %}
+{% block content %}
+<section class="narrow card stack">
+  <h1>{{ recipe.code }} {{ recipe.name }}（v{{ recipe.version }}）を削除しますか？</h1>
+  {% if in_use %}
+    <p class="warn">このレシピは使用中のため削除できません。使わなくなった場合は「使用停止」にしてください。</p>
+    <a class="btn" href="{% url 'recipe_detail' recipe.pk %}">戻る</a>
+  {% elif blocked %}
+    <p class="warn" role="alert">{{ blocked }}</p>
+    <a class="btn" href="{% url 'recipe_detail' recipe.pk %}">戻る</a>
+  {% else %}
+    <p>削除すると元に戻せません（変更履歴の記録は残ります）。ID {{ recipe.code }} は今後も再利用されません。</p>
+    <form method="post" class="button-row" data-once>
+      {% csrf_token %}
+      <a class="btn" href="{% url 'recipe_detail' recipe.pk %}">やめる</a>
+      <button class="btn btn-danger">削除する</button>
+    </form>
+  {% endif %}
+</section>
+{% endblock %}

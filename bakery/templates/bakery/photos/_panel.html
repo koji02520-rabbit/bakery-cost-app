@@ -1,0 +1,31 @@
+{% load bakery_photos %}
+<aside id="photo-panel" class="photo-panel" aria-label="写真">
+  {% with main=photos.0 %}
+  {% if main %}
+    <a class="photo-main" href="{% photo_url kind 'file' main.pk 'full' %}" target="_blank" rel="noopener">
+      <img src="{% photo_url kind 'file' main.pk 'thumb' %}" alt="{{ main.caption|default:owner.name }}">
+    </a>
+  {% elif fallback %}
+    <a class="photo-main" href="{% photo_url 'recipe' 'file' fallback.pk 'full' %}" target="_blank" rel="noopener">
+      <img src="{% photo_url 'recipe' 'file' fallback.pk 'thumb' %}" alt="{{ owner.name }}">
+      <span class="photo-note">レシピの写真</span>
+    </a>
+  {% endif %}
+  {% if main or fallback %}
+  <div class="photo-strip">
+    {% for p in photos|slice:"1:4" %}
+      <a href="{% photo_url kind 'file' p.pk 'full' %}" target="_blank" rel="noopener"><img src="{% photo_url kind 'file' p.pk 'thumb' %}" alt="{{ p.caption|default:owner.name }}" loading="lazy"></a>
+    {% endfor %}
+    {% if photos|length > 4 %}<span class="photo-more">+{{ photos|length|add:"-4" }}</span>{% endif %}
+    {% include "bakery/photos/_add_tile.html" with panel=True %}
+  </div>
+  {% else %}
+    {% include "bakery/photos/_add_tile.html" with panel=True %}
+  {% endif %}
+  {% endwith %}
+  <p id="photo-uploading" class="htmx-indicator muted small">写真を送っています…</p>
+  {% if photo_error %}<p class="field-error" role="alert">{{ photo_error }}</p>{% endif %}
+  {% if photos %}
+    <a class="photo-manage" href="{% if kind == 'recipe' %}{% url 'recipe_edit' owner.pk %}#photo-section{% else %}{% url 'product_photos' owner.pk %}{% endif %}">写真の編集（{{ photos|length }}枚）</a>
+  {% endif %}
+</aside>

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }}の写真{% endblock %}
+{% block content %}
+<p><a class="linklike" href="{% url 'product_detail' product.pk %}">← 商品詳細</a></p>
+<p class="code muted">{{ product.code }}</p>
+<h1>{{ product.name }} の写真</h1>
+{% include "bakery/photos/_section.html" %}
+{% if not photos and fallback %}<p class="hint">商品の写真がないあいだは、採用レシピの代表写真を商品詳細に表示しています。</p>{% endif %}
+{% endblock %}

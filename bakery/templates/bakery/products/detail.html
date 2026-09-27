@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}{{ product.name }}{% endblock %}
+{% block content %}
+{% with admin=request.membership.is_admin %}
+<p><a class="linklike" href="{% url 'product_list' %}">← 商品原価一覧</a></p>
+<div class="detail-top">
+  <div class="detail-top-main">
+    <p class="code muted">{{ product.code }}</p>
+    <h1>{{ product.name }}{% if product.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</h1>
+    {% if admin %}<a class="btn" href="{% url 'product_edit' product.pk %}">商品名・売価を修正する</a>{% endif %}
+  </div>
+  {% include "bakery/photos/_panel.html" %}
+</div>
+
+{% if newer %}
+<p class="msg-inline msg-info">採用レシピに新しいバージョンがあります：{{ newer.code }} {{ newer.name }}（v{{ newer.version }}）
+  {% if admin %}<a href="{% url 'product_switch' product.pk %}?recipe={{ newer.pk }}">切り替えを確認する →</a>{% endif %}</p>
+{% endif %}
+{% if pc.has_unconfirmed_allergen %}<p class="msg-inline msg-warn">アレルゲン未確認の材料があります：{{ v.unconfirmed_sources|join:"、" }}</p>{% endif %}
+{% if pc.error %}<p class="msg-inline msg-error" role="alert">{{ pc.error }}</p>{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <h2>原価・売価</h2>
+    <dl class="summary">
+      <div><dt>税抜売価</dt><dd class="num">{{ product.price_excluding_tax|yen }} 円</dd></div>
+      <div><dt>税込売価（{{ tax_rate|rate_percent }}%・切り捨て）</dt><dd class="num">{{ pc.price_including_tax|yen }} 円</dd></div>
+      <div><dt>食材原価</dt><dd class="num">{% if pc.cost is not None %}{{ pc.cost|cost:1 }} 円{% else %}—{% endif %}</dd></div>
+      <div><dt>合計原価</dt><dd class="num strong">{% if pc.cost is not None %}{{ pc.cost|cost:1 }} 円{% else %}—{% endif %}</dd></div>
+      <div><dt>原価率（原価 ÷ 税抜売価）</dt><dd class="num strong big-num">{% if pc.rate is not None %}{{ pc.rate|percent }}%{% else %}—{% endif %}</dd></div>
+    </dl>
+    <p class="hint">原価は小数第1位へ切り上げた値です（原価率もこの値で計算）。包材原価は今後追加予定で、現在は合計原価＝食材原価です。</p>
+  </section>
+
+  <section class="card">
+    <h2>採用レシピ</h2>
+    {% if product.adopted_recipe %}
+      <p><a href="{% url 'recipe_detail' product.adopted_recipe.pk %}"><span class="code">{{ product.adopted_recipe.code }}</span> {{ product.adopted_recipe.name }}</a> <span class="muted">v{{ product.adopted_recipe.version }}</span></p>
+    {% else %}
+      <p class="warn">採用レシピが設定されていません</p>
+    {% endif %}
+    {% if admin %}<a class="btn" href="{% url 'product_switch' product.pk %}">{% if product.adopted_recipe %}採用レシピを切り替える{% else %}採用レシピを設定する{% endif %}</a>{% endif %}
+
+    <h3>アレルゲン</h3>
+    {% if v and v.allergens %}
+      <ul class="allergen-list">
+        {% for a in v.allergens %}<li><span class="chip {% if a.item.is_mandatory %}chip-strong{% endif %}">{{ a.item.name }}</span> <span class="muted small">由来：{{ a.sources|join:"、" }}</span></li>{% endfor %}
+      </ul>
+    {% elif v and v.cost and not v.unconfirmed_sources %}
+      <p>アレルゲンなし</p>
+    {% elif v and v.unconfirmed_sources %}
+      <p class="muted">確認済みの材料にはアレルゲンはありません（未確認の材料を確認してください）</p>
+    {% else %}
+      <p class="muted">—</p>
+    {% endif %}
+  </section>
+</div>
+
+{% if v and v.nutrition %}
+<section class="card">
+  <h2>栄養成分表示</h2>
+  {% if label %}
+  <div class="nutrition-label" aria-label="栄養成分表示">
+    <p class="label-title">栄養成分表示<span>1個当たり</span></p>
+    <table>
+      {% for row in label %}<tr><th>{{ row.name }}</th><td>{{ row.value }}{{ row.unit }}</td></tr>{% endfor %}
+    </table>
+    <p class="label-note">推定値</p>
+  </div>
+  <p class="hint">食品表示基準の表示の位（熱量は整数、食塩相当量は小数第1位。たんぱく質・脂質・炭水化物はより細かい小数第1位まで）で四捨五入しています。100gあたり（仕込み重量 {{ v.nutrition.total_weight_g|grams }}g で換算）が基準未満の成分は 0 と表示します。</p>
+  {% else %}
+  <p class="warn">栄養値が未入力の材料があるため、栄養成分表示は作れません。</p>
+  {% endif %}
+  {% include "bakery/nutrition/_missing.html" with missing=v.nutrition_missing %}
+  <details class="more">
+    <summary>計算した値（丸める前）</summary>
+    <table class="table compare"><tbody>{% include "bakery/nutrition/_rows.html" with columns=v.nutrition_columns %}</tbody></table>
+  </details>
+</section>
+{% endif %}
+
+{% if v %}
+<section class="card">
+  <div class="card-head"><h2>原価の内訳（商品1個）</h2></div>
+  {% include "bakery/recipes/_aggregated.html" %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>採用レシピの切替履歴</h2>
+  <table class="table">
+    <thead><tr><th>日時</th><th>切り替え前 → 後</th><th class="num">原価</th><th class="only-wide-cell">実行した人</th></tr></thead>
+    <tbody>
+    {% for a in adoptions %}
+      <tr>
+        <td>{{ a.changed_at|date:"Y/m/d H:i" }}</td>
+        <td>{% if a.old_recipe %}{{ a.old_recipe.code }}（v{{ a.old_recipe.version }}）{% else %}（なし）{% endif %} → {{ a.new_recipe.code }}（v{{ a.new_recipe.version }}）</td>
+        <td class="num">{% if a.old_cost is not None %}{{ a.old_cost|cost:1 }} → {% endif %}{{ a.new_cost|cost:1 }} 円</td>
+        <td class="only-wide-cell">{{ a.changed_by.get_username|default:"—" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">履歴はありません</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section class="card">
+  <h2>過去の原価記録</h2>
+  <p class="hint">食材価格の変更・採用レシピの切替・中間レシピの置き換えを確定したときの原価です。</p>
+  <table class="table">
+    <thead><tr><th>日時</th><th>きっかけ</th><th class="num">原価</th><th class="num">原価率</th></tr></thead>
+    <tbody>
+    {% for s in snapshots %}
+      <tr>
+        <td>{{ s.taken_at|date:"Y/m/d H:i" }}</td>
+        <td>{{ s.get_reason_display }}</td>
+        <td class="num">{{ s.cost|cost:1 }} 円</td>
+        <td class="num">{% if s.cost_rate is not None %}{{ s.cost_rate|percent }}%{% else %}—{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="muted">記録はありません</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if admin %}
+<section class="card danger-zone">
+  <h2>使用停止</h2>
+  {% if product.status == 'active' %}
+    <form method="post" action="{% url 'product_set_status' product.pk %}" onsubmit="return confirm('{{ product.name|escapejs }} を使用停止にしますか？')">
+      {% csrf_token %}<input type="hidden" name="status" value="stopped">
+      <button class="btn">使用停止にする</button>
+    </form>
+    <p class="hint">使用停止にしても、切替履歴・原価記録は残ります。</p>
+  {% else %}
+    <form method="post" action="{% url 'product_set_status' product.pk %}">
+      {% csrf_token %}<input type="hidden" name="status" value="active">
+      <button class="btn">使用を再開する</button>
+    </form>
+  {% endif %}
+</section>
+{% endif %}
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}登録しました{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="steps"><span>1 入力</span><span>2 確認</span><span class="on">3 アレルゲン</span></p>
+  <div class="card center stack">
+    <p class="big-code code">{{ ingredient.code }}</p>
+    <h1>{{ ingredient.name }}</h1>
+    <p>続けて、この食材のアレルゲンを入力しますか？</p>
+    <p class="hint">入力するまでは「アレルゲン未確認」として扱われ、この食材を使うレシピ・商品に注意が表示されます。</p>
+    <a class="btn btn-primary btn-block" href="{% url 'ingredient_allergens' ingredient.pk %}">アレルゲンを今入力する</a>
+    <a class="btn btn-block" href="{% url 'ingredient_detail' ingredient.pk %}">あとで入力する</a>
+    <a class="linklike" href="{% url 'ingredient_nutrition' ingredient.pk %}">栄養成分を入力する（成分表から選べます）</a>
+    <a class="linklike" href="{% url 'ingredient_new' %}">＋ 続けて別の食材を登録する</a>
+  </div>
+</section>
+{% endblock %}

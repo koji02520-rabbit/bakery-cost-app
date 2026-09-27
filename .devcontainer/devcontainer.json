@@ -1,0 +1,20 @@
+{
+  "name": "原価管理アプリ（試用）",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": { "label": "原価管理アプリ", "onAutoForward": "openBrowser" }
+  },
+  "postCreateCommand": "bash .devcontainer/setup.sh",
+  "postAttachCommand": "python manage.py runserver 0.0.0.0:8000",
+  "customizations": {
+    "vscode": {
+      "extensions": ["ms-python.python"]
+    },
+    "codespaces": {
+      "openFiles": ["docs/試用ガイド.md"]
+    }
+  }
+}

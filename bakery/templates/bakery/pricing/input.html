@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}新しい価格を入力{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="steps"><span>1 食材を選ぶ</span><span class="on">2 新しい価格</span><span>3 影響確認</span></p>
+  <p class="muted"><span class="code">{{ ingredient.code }}</span> {{ ingredient.supplier.name }}</p>
+  <h1>{{ ingredient.name }} の新しい価格</h1>
+
+  {% if form.non_field_errors %}<p class="msg-inline msg-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+
+  <dl class="card summary">
+    <div><dt>今の購入重量</dt><dd class="num">{{ ingredient.purchase_weight_g|grams }} g</dd></div>
+    <div><dt>今の購入価格</dt><dd class="num">{{ ingredient.purchase_price|yen }} 円</dd></div>
+  </dl>
+
+  <form method="post" action="{% url 'price_change_edit' ingredient.pk %}" class="card stack" id="price-form" novalidate
+        hx-post="{% url 'price_change_check' ingredient.pk %}" hx-swap="none" hx-trigger="input changed delay:300ms">
+    {% csrf_token %}
+    <label class="field" for="id_purchase_weight_g"><span>購入重量</span>
+      <span class="with-unit"><input type="text" inputmode="decimal" name="purchase_weight_g" id="id_purchase_weight_g" value="{{ form.purchase_weight_g.value|default:'' }}" autocomplete="off"><span class="unit">g</span></span></label>
+    <div id="err-purchase_weight_g" class="field-error" role="alert">{{ form.errors.purchase_weight_g.0|default:'' }}</div>
+    <p class="hint">袋の大きさが変わった場合は、購入重量も変えてください（kgではなくg）。</p>
+
+    <label class="field" for="id_purchase_price"><span>購入価格</span>
+      <span class="with-unit"><input type="text" inputmode="decimal" name="purchase_price" id="id_purchase_price" value="{{ form.purchase_price.value|default:'' }}" autocomplete="off" autofocus><span class="unit">円</span></span></label>
+    <div id="err-purchase_price" class="field-error" role="alert">{{ form.errors.purchase_price.0|default:'' }}</div>
+
+    {% include "bakery/pricing/_compare.html" %}
+
+    <div class="button-row">
+      <a class="btn" href="{% url 'price_change' %}">食材を選び直す</a>
+      <button name="step" value="confirm" class="btn btn-primary">影響を確認する</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

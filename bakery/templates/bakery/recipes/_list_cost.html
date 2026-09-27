@@ -1,0 +1,1 @@
+{% load bakery_format %}{% if not r.costs %}<span class="muted">—</span>{% elif r.kind == 'final' %}{{ r.costs.0|cost:1 }} 円/個{% elif r.costs.1 is None %}<span class="muted">材料なし</span>{% else %}{{ r.costs.1|yen_per_g }} 円/g{% endif %}

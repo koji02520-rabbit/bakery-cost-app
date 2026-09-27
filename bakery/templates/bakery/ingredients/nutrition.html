@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}栄養成分の入力{% endblock %}
+{% block content %}
+<section class="narrow wide-ok">
+  <p class="muted"><span class="code">{{ ingredient.code }}</span> {{ ingredient.name }}</p>
+  <h1>栄養成分を入力する</h1>
+  <p class="hint">可食部100gあたりの値です。日本食品標準成分表から選ぶと値が入ります。商品ラベルや規格書の値がある場合は、そちらを入力してください。</p>
+
+  <div class="grid-2">
+    <section class="card">
+      <h2>成分表から選ぶ</h2>
+      <form class="searchbar" hx-get="{% url 'food_search' %}" hx-target="#food-results"
+            hx-trigger="load, input changed delay:300ms from:input[name=q], submit">
+        <input type="search" name="q" value="{{ q }}" placeholder="例：強力粉、バター 有塩" aria-label="成分表の食品を探す" autocomplete="off">
+        <button class="btn">探す</button>
+      </form>
+      <p class="hint">成分表の食品名は「こむぎ［小麦粉］強力粉」のような名前です。空白で区切ると、すべての言葉を含む食品を探します。</p>
+      <div id="food-results" class="food-results"></div>
+      <p class="hint source-note">出典：日本食品標準成分表（八訂）増補2023年（文部科学省）を加工して作成</p>
+    </section>
+
+    <form method="post" class="card stack" novalidate data-once id="nutrition-form">
+      {% csrf_token %}
+      <h2>100gあたりの値</h2>
+      {% if form.non_field_errors %}<p class="msg-inline msg-error" role="alert">{{ form.non_field_errors.0 }}</p>{% endif %}
+      <p id="picked-food" class="ok" role="status">{% if ingredient.nutrition_food %}成分表：{{ ingredient.nutrition_food }}{% endif %}</p>
+      {% for field, unit in form.nutrition_fields %}
+      <label class="field" for="{{ field.id_for_label }}"><span>{{ field.label }}</span>
+        <span class="with-unit">{{ field }}<span class="unit">{{ unit }}</span></span></label>
+      {% if field.errors %}<div class="field-error" role="alert">{{ field.errors.0 }}</div>{% endif %}
+      {% endfor %}
+      <details class="more">
+        <summary>ナトリウム(mg)しか分からないとき</summary>
+        <label class="field" for="id_sodium_mg"><span>ナトリウム</span>
+          <span class="with-unit">{{ form.sodium_mg }}<span class="unit">mg</span></span></label>
+        <p class="hint">食塩相当量を空欄にして保存すると、ナトリウム × 2.54 ÷ 1000 で食塩相当量を計算します。</p>
+      </details>
+      <label class="field" for="id_nutrition_note"><span>値の出どころ（任意）</span>{{ form.nutrition_note }}</label>
+      {{ form.nutrition_food }}
+      <p class="hint">含まれない成分は 0 を入力します（水は5項目すべて 0）。すべて空欄で保存すると「未入力」に戻ります。</p>
+      <div class="button-row">
+        <a class="btn" href="{% url 'ingredient_detail' ingredient.pk %}">やめる</a>
+        <button class="btn btn-primary">保存する</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

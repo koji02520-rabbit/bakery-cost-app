@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}ホーム{% endblock %}
+{% block content %}
+<h1 class="visually-hidden">ホーム</h1>
+
+{% if unconfirmed_count %}
+<a class="notice" href="{% url 'ingredient_list' %}?allergen=unconfirmed">
+  <strong>アレルゲン未確認の食材が {{ unconfirmed_count }} 件あります</strong>
+  <span>一覧で確認する →</span>
+</a>
+{% endif %}
+
+<div class="home-actions">
+  <a class="action" href="{% if request.membership.is_admin %}{% url 'ingredient_new' %}{% else %}{% url 'ingredient_list' %}{% endif %}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h12l-1 12H7zM9 8V6a3 3 0 0 1 6 0v2M12 11v6M9 14h6"/></svg>
+    <span class="action-title">食材を登録する</span>
+    <span class="action-desc">{% if request.membership.is_admin %}新しい材料の情報や価格を登録します{% else %}食材の検索・確認（登録は管理者が行います）{% endif %}</span>
+  </a>
+  <a class="action" href="{% url 'recipe_new' %}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h10l3 3v15H6zM9 9h7M9 13h7M9 17h4"/></svg>
+    <span class="action-title">レシピを作る</span>
+    <span class="action-desc">生地や副材料のレシピを作ります</span>
+  </a>
+  <a class="action" href="{% url 'product_list' %}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10c0-4 4-6 8-6s8 2 8 6v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2zM8 14h8"/></svg>
+    <span class="action-title">商品原価を見る</span>
+    <span class="action-desc">商品の原価・売価・原価率を確認します</span>
+  </a>
+  <a class="action" href="{% url 'price_change' %}">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17l5-5 4 4 7-7M15 9h5v5"/></svg>
+    <span class="action-title">価格を変更する</span>
+    <span class="action-desc">食材価格を変更し、商品の影響を確認します</span>
+  </a>
+</div>
+
+<section class="card">
+  <h2>探す</h2>
+  <form method="get" class="searchbar" role="search">
+    <input type="search" name="q" value="{{ q }}" placeholder="食材名・レシピ名・商品名・ID" aria-label="検索する言葉">
+    <button class="btn">検索</button>
+  </form>
+  {% if q %}
+    {% if ingredients or recipes or products %}
+    <ul class="result-list">
+      {% for p in products %}
+      <li><a href="{% url 'product_detail' p.pk %}"><span class="tag">商品</span> <span class="code">{{ p.code }}</span> {{ p.name }}{% if p.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</a></li>
+      {% endfor %}
+      {% for i in ingredients %}
+      <li><a href="{% url 'ingredient_detail' i.pk %}"><span class="tag">食材</span> <span class="code">{{ i.code }}</span> {{ i.name }} <span class="muted">／{{ i.supplier.name }}</span>{% if i.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</a></li>
+      {% endfor %}
+      {% for r in recipes %}
+      <li><a href="{% url 'recipe_detail' r.pk %}"><span class="tag tag-recipe">{% if r.kind == 'final' %}最終商品レシピ{% else %}中間レシピ{% endif %}</span> <span class="code">{{ r.code }}</span> {{ r.name }} <span class="muted">v{{ r.version }}</span>{% if r.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</a></li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="muted">「{{ q }}」に当てはまるものはありません</p>
+    {% endif %}
+  {% endif %}
+</section>
+{% endblock %}

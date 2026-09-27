@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}登録内容の確認{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="steps"><span>1 入力</span><span class="on">2 確認</span><span>3 アレルゲン</span></p>
+  <h1>この内容で登録しますか？</h1>
+
+  {% if duplicates %}
+  <div class="notice notice-static" role="alert">
+    <strong>同じ食材名・同じ仕入先の食材がすでにあります</strong>
+    <ul>{% for d in duplicates %}<li><a href="{% url 'ingredient_detail' d.pk %}" target="_blank" rel="noopener">{{ d.code }} {{ d.name }}</a>{% if d.status == 'stopped' %}（使用停止）{% endif %}</li>{% endfor %}</ul>
+    <span>価格が変わっただけなら、新しく登録せずに「価格を変更する」を使ってください。</span>
+  </div>
+  {% endif %}
+
+  <dl class="card summary">
+    <div><dt>発行予定の食材ID</dt><dd class="code">{{ preview_code }}</dd></div>
+    <div><dt>食材名</dt><dd>{{ data.name }}</dd></div>
+    <div><dt>カテゴリー</dt><dd>{{ data.category }}</dd></div>
+    <div><dt>仕入先</dt><dd>{{ data.supplier.name }}</dd></div>
+    <div><dt>購入重量</dt><dd class="num">{{ data.purchase_weight_g|grams }} g</dd></div>
+    <div><dt>購入価格</dt><dd class="num">{{ data.purchase_price|yen }} 円</dd></div>
+    <div><dt>1gあたり価格</dt><dd class="num">{{ unit_price|yen_per_g }} 円/g</dd></div>
+  </dl>
+  <p class="hint">食材IDは登録した時点で正式に決まります。同時に別の人が登録した場合は、番号が変わることがあります。</p>
+
+  <form method="post" action="{% url 'ingredient_new' %}" class="button-row" data-once>
+    {% csrf_token %}
+    {% for field in form %}<input type="hidden" name="{{ field.html_name }}" value="{{ field.value|default:'' }}">{% endfor %}
+    <button name="step" value="back" class="btn">← 戻って修正する</button>
+    <button name="step" value="register" class="btn btn-primary">この内容で登録する</button>
+  </form>
+</section>
+{% endblock %}

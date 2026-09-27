@@ -1,0 +1,20 @@
+{% load bakery_format %}
+{% if foods %}
+<ul class="candidates">
+  {% for f in foods %}
+  <li class="candidate">
+    <button type="button" class="cand-main as-button" data-food="{{ f.pk }}"
+            data-label="{{ f.food_number }} {{ f.name }}"
+            data-energy_kcal="{{ f.energy_kcal|grams_input }}" data-protein_g="{{ f.protein_g|grams_input }}"
+            data-fat_g="{{ f.fat_g|grams_input }}" data-carbohydrate_g="{{ f.carbohydrate_g|grams_input }}"
+            data-salt_g="{{ f.salt_g|grams_input }}">
+      <span class="tag">{{ f.group }}</span> <span class="code small">{{ f.food_number }}</span> {{ f.name }}
+      <span class="muted small food-values">{{ f.energy_kcal|grams_input|default:"—" }}kcal・たんぱく質{{ f.protein_g|grams_input|default:"—" }}g・脂質{{ f.fat_g|grams_input|default:"—" }}g・炭水化物{{ f.carbohydrate_g|grams_input|default:"—" }}g・食塩{{ f.salt_g|grams_input|default:"—" }}g</span>
+    </button>
+  </li>
+  {% endfor %}
+</ul>
+{% if foods|length == 40 %}<p class="hint">40件まで表示しています。言葉を足して絞り込んでください。</p>{% endif %}
+{% elif q %}
+<p class="muted">「{{ q }}」を含む食品は見つかりません。ひらがなや別の言い方でも探してみてください。</p>
+{% endif %}

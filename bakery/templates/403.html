@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}使えない操作です{% endblock %}
+{% block content %}
+<section class="narrow card">
+  <h1>この操作は管理者のみ行えます</h1>
+  <p>必要な場合は管理者に依頼してください。</p>
+  <a class="btn" href="{% url 'home' %}">ホームへ戻る</a>
+</section>
+{% endblock %}

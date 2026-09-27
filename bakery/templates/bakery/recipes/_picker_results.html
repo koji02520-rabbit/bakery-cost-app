@@ -1,0 +1,33 @@
+{% load bakery_format %}
+<ul class="candidates">
+{% for c in candidates %}
+  <li class="candidate {% if c.disabled_reason %}disabled{% endif %}">
+    {% if c.disabled_reason %}
+      <div class="cand-main">
+        {% include "bakery/recipes/_candidate_label.html" %}
+      </div>
+      <p class="hint">{{ c.disabled_reason }}</p>
+    {% elif item %}
+      <button type="button" class="cand-main as-button"
+              hx-post="{% url 'recipe_item_material' item.pk %}" hx-target="#editor-body" hx-swap="outerHTML"
+              hx-vals='{"kind": "{{ c.kind.value }}", "ref": "{{ c.obj.pk }}"}'>
+        {% include "bakery/recipes/_candidate_label.html" %}
+      </button>
+    {% else %}
+      <details>
+        <summary class="cand-main">{% include "bakery/recipes/_candidate_label.html" %}</summary>
+        <form class="row-form" hx-post="{% url 'recipe_item_add' recipe.pk %}" hx-target="#editor-body" hx-swap="outerHTML">
+          <input type="hidden" name="kind" value="{{ c.kind.value }}">
+          <input type="hidden" name="ref" value="{{ c.obj.pk }}">
+          <label class="field"><span>使用量</span>
+            <span class="with-unit"><input type="text" inputmode="decimal" name="quantity_g" autocomplete="off" placeholder="例：1000"><span class="unit">g</span></span></label>
+          <label class="field"><span>工程（任意）</span><input type="text" name="step_label" value="{{ last_step }}" maxlength="50" placeholder="例：1、ミキシング" autocomplete="off"></label>
+          <button class="btn btn-primary">レシピに追加</button>
+        </form>
+      </details>
+    {% endif %}
+  </li>
+{% empty %}
+  <li class="empty">当てはまる材料がありません{% if q %}（「{{ q }}」）{% endif %}。食材が未登録の場合は、先に食材を登録してください。</li>
+{% endfor %}
+</ul>

@@ -1,0 +1,26 @@
+# GitHub Codespaces（または VS Code の Dev Containers）用。アプリと PostgreSQL を一緒に起動する。
+# パスワードは試用環境の中だけで使うもの（外部には公開されない）。
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.12
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/bakery
+      DJANGO_DEBUG: "true"
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bakery
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% load bakery_format %}
+{% block title %}{{ ingredient.name }}{% endblock %}
+{% block content %}
+{% with admin=request.membership.is_admin %}
+<p><a class="linklike" href="{% url 'ingredient_list' %}">← 食材一覧</a></p>
+<div class="page-head">
+  <div>
+    <p class="code muted">{{ ingredient.code }}{% if ingredient.legacy_code %}（旧コード {{ ingredient.legacy_code }}）{% endif %}</p>
+    <h1>{{ ingredient.name }}{% if ingredient.status == 'stopped' %} <span class="badge">使用停止</span>{% endif %}</h1>
+  </div>
+  <div class="button-row compact">
+    <a class="btn btn-primary" href="{% url 'price_change_edit' ingredient.pk %}">価格を変更する</a>
+    {% if admin %}<a class="btn" href="{% url 'ingredient_edit' ingredient.pk %}">修正する</a>{% endif %}
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2>基本情報</h2>
+    <dl class="summary">
+      <div><dt>カテゴリー</dt><dd>{{ ingredient.category }}</dd></div>
+      <div><dt>仕入先</dt><dd>{{ ingredient.supplier.name }}</dd></div>
+      <div><dt>購入重量</dt><dd class="num">{{ ingredient.purchase_weight_g|grams }} g</dd></div>
+      <div><dt>購入価格</dt><dd class="num">{{ ingredient.purchase_price|yen }} 円</dd></div>
+      <div><dt>1gあたり価格</dt><dd class="num strong">{{ ingredient.unit_price|yen_per_g }} 円/g</dd></div>
+      {% if ingredient.note %}<div><dt>備考</dt><dd class="pre">{{ ingredient.note }}</dd></div>{% endif %}
+    </dl>
+  </section>
+
+  <section class="card">
+    <h2>アレルゲン</h2>
+    {% if ingredient.allergen_confirmed %}
+      {% if allergens %}
+        <ul class="chips">{% for a in allergens %}<li class="{% if a.is_mandatory %}chip-strong{% endif %}">{{ a.name }}</li>{% endfor %}</ul>
+      {% else %}
+        <p>アレルゲンなし</p>
+      {% endif %}
+      <p class="hint">確認済み：{{ ingredient.allergen_confirmed_by.get_username|default:"—" }}（{{ ingredient.allergen_confirmed_at|date:"Y/m/d H:i" }}）</p>
+    {% else %}
+      <p class="warn">未確認です。この食材を使うレシピ・商品に注意が表示されます。</p>
+    {% endif %}
+    {% if admin %}<a class="btn" href="{% url 'ingredient_allergens' ingredient.pk %}">{% if ingredient.allergen_confirmed %}アレルゲンを修正する{% else %}アレルゲンを入力する{% endif %}</a>{% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-head">
+    <h2>栄養成分（100gあたり）</h2>
+    {% if admin %}<a class="btn" href="{% url 'ingredient_nutrition' ingredient.pk %}">{% if ingredient.nutrition_complete %}修正する{% else %}入力する{% endif %}</a>{% endif %}
+  </div>
+  {% if ingredient.nutrition_complete %}
+    <dl class="summary">
+      <div><dt>熱量</dt><dd class="num">{{ ingredient.energy_kcal|grams_input }} kcal</dd></div>
+      <div><dt>たんぱく質</dt><dd class="num">{{ ingredient.protein_g|grams_input }} g</dd></div>
+      <div><dt>脂質</dt><dd class="num">{{ ingredient.fat_g|grams_input }} g</dd></div>
+      <div><dt>炭水化物</dt><dd class="num">{{ ingredient.carbohydrate_g|grams_input }} g</dd></div>
+      <div><dt>食塩相当量</dt><dd class="num">{{ ingredient.salt_g|grams_input }} g</dd></div>
+    </dl>
+    {% if ingredient.nutrition_food or ingredient.nutrition_note %}
+    <p class="hint">出どころ：{{ ingredient.nutrition_note|default:"" }}{% if ingredient.nutrition_food %}（成分表 {{ ingredient.nutrition_food }}）{% endif %}</p>
+    {% endif %}
+    {% if ingredient.nutrition_food %}<p class="hint source-note">出典：日本食品標準成分表（八訂）増補2023年（文部科学省）を加工して作成</p>{% endif %}
+  {% else %}
+    <p class="warn">未入力です。この食材を使うレシピ・商品の栄養成分は正しく計算できません。</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>この食材を使っているレシピ・商品</h2>
+  {% if direct_recipes or indirect_recipes %}
+    <ul class="result-list">
+      {% for r in direct_recipes %}<li><a href="{% url 'recipe_detail' r.pk %}"><span class="tag">{{ r.get_kind_display }}</span> <span class="code">{{ r.code }}</span> {{ r.name }}（v{{ r.version }}）</a></li>{% endfor %}
+      {% for r in indirect_recipes %}<li><a href="{% url 'recipe_detail' r.pk %}"><span class="tag tag-soft">中間レシピ経由</span> <span class="code">{{ r.code }}</span> {{ r.name }}（v{{ r.version }}）</a></li>{% endfor %}
+    </ul>
+    {% if products %}
+    <h3>影響する商品</h3>
+    <ul class="result-list">{% for p in products %}<li><a href="{% url 'product_detail' p.pk %}"><span class="code">{{ p.code }}</span> {{ p.name }}</a></li>{% endfor %}</ul>
+    {% endif %}
+  {% else %}
+    <p class="muted">まだどのレシピにも使われていません</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>価格履歴</h2>
+  <table class="table">
+    <thead><tr><th>日時</th><th class="num">購入重量</th><th class="num">購入価格</th><th class="num only-wide-cell">1g単価</th><th class="only-wide-cell">変更した人</th></tr></thead>
+    <tbody>
+    {% for h in price_history %}
+      <tr>
+        <td>{{ h.changed_at|date:"Y/m/d H:i" }}</td>
+        <td class="num">{{ h.purchase_weight_g|grams }} g</td>
+        <td class="num">{{ h.purchase_price|yen }} 円</td>
+        <td class="num only-wide-cell">{{ h.unit_price|yen_per_g }}</td>
+        <td class="only-wide-cell">{{ h.changed_by.get_username|default:"—" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5" class="muted">履歴はありません</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% if admin %}
+<section class="card danger-zone">
+  <h2>使用停止・削除</h2>
+  {% if ingredient.status == 'active' %}
+    <p class="hint">使用停止にすると、新しいレシピでは選べなくなります。今までのレシピ・原価はそのまま残ります。</p>
+    <form method="post" action="{% url 'ingredient_set_status' ingredient.pk %}" onsubmit="return confirm('{{ ingredient.name|escapejs }} を使用停止にしますか？')">
+      {% csrf_token %}<input type="hidden" name="status" value="stopped">
+      <button class="btn">使用停止にする</button>
+    </form>
+  {% else %}
+    <form method="post" action="{% url 'ingredient_set_status' ingredient.pk %}">
+      {% csrf_token %}<input type="hidden" name="status" value="active">
+      <button class="btn">使用を再開する</button>
+    </form>
+  {% endif %}
+  {% if can_delete %}<a class="btn btn-danger-outline" href="{% url 'ingredient_delete' ingredient.pk %}">削除する</a>{% endif %}
+</section>
+{% endif %}
+{% endwith %}
+{% endblock %}

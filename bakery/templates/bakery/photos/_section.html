@@ -1,0 +1,40 @@
+{% load bakery_photos %}
+<section id="photo-section" class="card photo-section">
+  <div class="card-head">
+    <h2>写真 <span class="muted small">{{ photos|length }}枚</span></h2>
+  </div>
+  {% if photo_error %}<p class="msg-inline msg-error" role="alert">{{ photo_error }}</p>{% endif %}
+
+  <ul class="photo-grid">
+    {% for p in photos %}
+    <li class="photo-card">
+      <a href="{% photo_url kind 'file' p.pk 'full' %}" target="_blank" rel="noopener" class="photo-thumb">
+        <img src="{% photo_url kind 'file' p.pk 'thumb' %}" alt="{{ p.caption|default:owner.name }}" loading="lazy">
+        {% if forloop.first %}<span class="photo-badge">代表</span>{% endif %}
+      </a>
+      {% if p.caption %}<p class="photo-caption">{{ p.caption }}</p>{% endif %}
+      <details class="photo-edit">
+        <summary>編集</summary>
+        <form hx-post="{% photo_url kind 'caption' p.pk %}" hx-target="#photo-section" hx-swap="outerHTML" class="stack-tight">
+          <input type="text" name="caption" value="{{ p.caption }}" maxlength="100" placeholder="説明（例：成形後、焼成前）" aria-label="写真の説明" autocomplete="off">
+          <button class="btn">説明を保存</button>
+        </form>
+        <div class="photo-actions">
+          {% if not forloop.first %}
+          <button type="button" class="btn" hx-post="{% photo_url kind 'move' p.pk %}" hx-vals='{"direction": "first"}' hx-target="#photo-section" hx-swap="outerHTML">代表にする</button>
+          <button type="button" class="btn" aria-label="左へ" hx-post="{% photo_url kind 'move' p.pk %}" hx-vals='{"direction": "left"}' hx-target="#photo-section" hx-swap="outerHTML">←</button>
+          {% endif %}
+          {% if not forloop.last %}
+          <button type="button" class="btn" aria-label="右へ" hx-post="{% photo_url kind 'move' p.pk %}" hx-vals='{"direction": "right"}' hx-target="#photo-section" hx-swap="outerHTML">→</button>
+          {% endif %}
+          <button type="button" class="btn btn-danger-outline" hx-post="{% photo_url kind 'delete' p.pk %}" hx-target="#photo-section" hx-swap="outerHTML"
+                  hx-confirm="この写真を削除しますか？">削除</button>
+        </div>
+      </details>
+    </li>
+    {% endfor %}
+    <li class="photo-card">{% include "bakery/photos/_add_tile.html" with panel=False %}</li>
+  </ul>
+  <p id="photo-uploading" class="htmx-indicator muted small">写真を送っています…</p>
+  <p class="hint">1枚目が代表写真です。写真は原価に影響しないので、使用中でも追加・変更できます。</p>
+</section>

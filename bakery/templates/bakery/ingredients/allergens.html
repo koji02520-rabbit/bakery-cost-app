@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}アレルゲン入力{% endblock %}
+{% block content %}
+<section class="narrow">
+  <p class="muted"><span class="code">{{ ingredient.code }}</span> {{ ingredient.name }}</p>
+  <h1>アレルゲンを入力する</h1>
+  <p class="hint">この食材に含まれるものにチェックを入れてください。何も含まれない場合は、チェックを入れずに「確認済みにする」を押します（「アレルゲンなし」として扱います）。</p>
+
+  <form method="post" class="stack" data-once>
+    {% csrf_token %}
+    <fieldset class="card">
+      <legend>特定原材料（表示義務）</legend>
+      <div class="check-grid">
+        {% for e in mandatory %}<label class="check"><input type="checkbox" name="allergens" value="{{ e.item.pk }}" {% if e.checked %}checked{% endif %}> {{ e.item.name }}</label>{% endfor %}
+      </div>
+    </fieldset>
+    <fieldset class="card">
+      <legend>特定原材料に準ずるもの（表示推奨）</legend>
+      <div class="check-grid">
+        {% for e in recommended %}<label class="check"><input type="checkbox" name="allergens" value="{{ e.item.pk }}" {% if e.checked %}checked{% endif %}> {{ e.item.name }}</label>{% endfor %}
+      </div>
+    </fieldset>
+    <div class="button-row">
+      <a class="btn" href="{% url 'ingredient_detail' ingredient.pk %}">やめる</a>
+      <button class="btn btn-primary">確認済みにする</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}置き換えました{% endblock %}
+{% block content %}
+<section class="narrow card stack center">
+  <h1>置き換えました</h1>
+  <p>{{ old.code }} {{ old.name }}（v{{ old.version }}）→ {{ new.code }} {{ new.name }}（v{{ new.version }}）</p>
+  {% if old.status == 'active' %}
+    <p>旧バージョン（{{ old.code }}）を使用停止にしますか？<br><span class="hint">使用停止にすると、今後うっかり材料に選ばれるのを防げます。</span></p>
+    <form method="post" action="{% url 'recipe_set_status' old.pk %}" data-once>
+      {% csrf_token %}<input type="hidden" name="status" value="stopped">
+      <button class="btn btn-primary btn-block">旧バージョンを使用停止にする</button>
+    </form>
+    <a class="btn btn-block" href="{% url 'recipe_detail' new.pk %}">使用停止にしない</a>
+  {% else %}
+    <a class="btn btn-primary btn-block" href="{% url 'recipe_detail' new.pk %}">新しいバージョンを見る</a>
+  {% endif %}
+</section>
+{% endblock %}
