@@ -33,7 +33,7 @@
 
 ![レシピ詳細](docs/images/README/recipe-detail.png)
 
-画面どうしのつながりは [docs/画面遷移図.md](docs/画面遷移図.md) にまとめています。
+画面どうしのつながりは [docs/画面遷移図.md](docs/画面遷移図.md)、テーブルの構成は [docs/ER図.md](docs/ER図.md) にまとめています。
 
 ## 作った背景
 
