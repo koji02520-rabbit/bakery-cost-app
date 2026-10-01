@@ -33,6 +33,8 @@ if os.environ.get("CODESPACE_NAME"):
     _forward_domain = os.environ.get("GITHUB_CODESPACES_PORT_FORWARDING_DOMAIN", "app.github.dev")
     ALLOWED_HOSTS.append(f".{_forward_domain}")
     CSRF_TRUSTED_ORIGINS.append(f"https://{os.environ['CODESPACE_NAME']}-8000.{_forward_domain}")
+    # 転送の途中で Origin が https://localhost:8000 に書き換えられて届くため、これも信頼する
+    CSRF_TRUSTED_ORIGINS.append("https://localhost:8000")
 
 INSTALLED_APPS = [
     "django.contrib.admin",
