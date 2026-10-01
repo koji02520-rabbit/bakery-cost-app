@@ -5,15 +5,27 @@
 
 **このリポジトリは試用のためのプロトタイプです。** 試用データの仕入先・価格はすべて架空です。
 
-<!--
 ## 画面
 
-docs/images/ にスクリーンショットを置いたら、この部分のコメントを外す。
+### ホーム
 
-| 商品原価の一覧 | 価格変更の影響確認 | レシピ編集 |
-|---|---|---|
-| ![商品原価の一覧](docs/images/products.png) | ![価格変更の影響確認](docs/images/price-impact.png) | ![レシピ編集](docs/images/recipe-edit.png) |
--->
+![ホーム](docs/images/home.png)
+
+### 食材の価格変更と影響の確認
+
+食材を選び、新しい価格を入れると、確定する前に影響する商品の原価と原価率を確認できます。
+
+| 1. 食材を選ぶ | 2. 新しい価格を入れる |
+|---|---|
+| ![食材を選ぶ](docs/images/price-select.png) | ![新しい価格を入れる](docs/images/price-input.png) |
+
+![影響の確認](docs/images/price-impact.png)
+
+### レシピ詳細
+
+中間材料（生地・クリーム）を含めた原価と、アレルゲンの由来を表示します。
+
+![レシピ詳細](docs/images/recipe-detail.png)
 
 ## 作った背景
 
