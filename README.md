@@ -9,13 +9,13 @@
 
 ### ホーム
 
-![ホーム](docs/images/home.png)
+![ホーム](docs/images/README/home.png)
 
 ### 商品原価の一覧
 
 商品ごとに税抜・税込の売価、原価、原価率、採用しているレシピを一覧で確認できます。
 
-![商品原価の一覧](docs/images/products.png)
+![商品原価の一覧](docs/images/README/products.png)
 
 ### 食材の価格変更と影響の確認
 
@@ -23,15 +23,17 @@
 
 | 1. 食材を選ぶ | 2. 新しい価格を入れる |
 |---|---|
-| ![食材を選ぶ](docs/images/price-select.png) | ![新しい価格を入れる](docs/images/price-input.png) |
+| ![食材を選ぶ](docs/images/README/price-select.png) | ![新しい価格を入れる](docs/images/README/price-input.png) |
 
-![影響の確認](docs/images/price-impact.png)
+![影響の確認](docs/images/README/price-impact.png)
 
 ### レシピ詳細
 
 中間材料（生地・クリーム）を含めた原価と、アレルゲンの由来を表示します。
 
-![レシピ詳細](docs/images/recipe-detail.png)
+![レシピ詳細](docs/images/README/recipe-detail.png)
+
+画面どうしのつながりは [docs/画面遷移図.md](docs/画面遷移図.md) にまとめています。
 
 ## 作った背景
 
