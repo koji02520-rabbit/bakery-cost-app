@@ -10,13 +10,16 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
+from django.utils.http import content_disposition_header
 from django.views.decorators.http import require_POST
 
 from bakery.forms import ProductForm
 from bakery.models import IdSequence, Product, Recipe, Status, SystemSetting
 from bakery.permissions import admin_required, member_required
-from bakery.services import audit
+from bakery.services import audit, exports
 from bakery.services import products as svc
 from bakery.services.nutrition import label_rows
 from bakery.services.recipes import RecipeRuleError
@@ -36,8 +39,8 @@ SORTS = {
 # --------------------------------------------------------------------------
 
 
-@member_required
-def product_list(request):
+def _filtered_costs(request):
+    """一覧の絞り込み・並び順（q・status・sort）を適用した全件の ProductCost。エクスポートと共通。"""
     company = request.company
     q = request.GET.get("q", "").strip()
     status = request.GET.get("status", Status.ACTIVE)
@@ -53,6 +56,13 @@ def product_list(request):
 
     # 原価率で並べ替えるため、絞り込んだ全件を計算してから並べる（数百件規模を想定：第49項）
     costs = sorted(svc.evaluate(company, rows), key=SORTS[sort][1])
+    return costs, q, status, sort
+
+
+@member_required
+def product_list(request):
+    company = request.company
+    costs, q, status, sort = _filtered_costs(request)
     page = Paginator(costs, PAGE_SIZE).get_page(request.GET.get("page"))
     params = request.GET.copy()
     params.pop("page", None)
@@ -65,6 +75,24 @@ def product_list(request):
     if request.headers.get("HX-Request") == "true":
         return render(request, "bakery/products/_list_results.html", context)
     return render(request, "bakery/products/list.html", context)
+
+
+EXPORT_FORMATS = {
+    "csv": (exports.to_csv, "text/csv; charset=utf-8"),
+    "xlsx": (exports.to_xlsx, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+}
+
+
+@member_required
+def product_export(request, fmt):
+    """商品原価表のエクスポート（第68項）。一覧と同じ絞り込み・並び順で、ページに分けず全件を出す。"""
+    if fmt not in EXPORT_FORMATS:
+        raise Http404
+    build, content_type = EXPORT_FORMATS[fmt]
+    costs, *_ = _filtered_costs(request)
+    filename = f"商品原価_{timezone.localdate():%Y%m%d}.{fmt}"
+    return HttpResponse(build(exports.cost_rows(costs)), content_type=content_type,
+                        headers={"Content-Disposition": content_disposition_header(True, filename)})
 
 
 # --------------------------------------------------------------------------

@@ -167,3 +167,68 @@ class ListAndPermissionTests(ProductTestBase):
             with self.subTest(page=name):
                 self.assertEqual(self.client.get(reverse(name, args=args)).status_code, 200)
         self.assertContains(self.client.get(reverse("home"), {"q": "バターロール"}), "ITEM-001")
+
+
+class ExportTests(ProductTestBase):
+    """商品原価表のエクスポート（第68項）。"""
+
+    def setUp(self):
+        super().setUp()
+        dough, bread = self.make_final()
+        self.register(name="バターロール", price="200", recipe=bread)  # 原価 22.3円・税込 216円
+        self.register(name="=試作品", price="155")  # レシピ未設定・税込 167円
+        self.client.force_login(self.staff)  # 閲覧できる人なら誰でも出力できる
+
+    def export(self, fmt, **params):
+        return self.client.get(reverse("product_export", args=[fmt]), params)
+
+    def test_csv(self):
+        response = self.export("csv")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/csv; charset=utf-8")
+        self.assertIn("attachment", response["Content-Disposition"])
+        self.assertIn(".csv", response["Content-Disposition"])
+        self.assertTrue(response.content.startswith(b"\xef\xbb\xbf"))  # Excel で文字化けしないよう BOM 付き
+        self.assertEqual(response.content.decode("utf-8-sig").splitlines(), [
+            "商品ID,商品名,原価（円）,売価（税抜・円）,税込売価（円）",
+            "ITEM-001,バターロール,22.3,200,216",
+            "ITEM-002,'=試作品,,155,167",  # 原価を計算できない商品は空欄、数式に見える名前は文字として出す
+        ])
+
+    def test_xlsx(self):
+        from io import BytesIO
+
+        from openpyxl import load_workbook
+
+        response = self.export("xlsx")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(".xlsx", response["Content-Disposition"])
+        sheet = load_workbook(BytesIO(response.content)).active
+        rows = [list(r) for r in sheet.iter_rows(values_only=True)]
+        self.assertEqual(rows, [
+            ["商品ID", "商品名", "原価（円）", "売価（税抜・円）", "税込売価（円）"],
+            ["ITEM-001", "バターロール", 22.3, 200, 216],
+            ["ITEM-002", "=試作品", None, 155, 167],
+        ])
+        self.assertEqual(sheet["B3"].data_type, "s")  # 数式にしない
+        self.assertEqual(sheet["C2"].number_format, "#,##0.0")
+
+    def test_follows_list_filters_and_sort(self):
+        lines = self.export("csv", q="バター").content.decode("utf-8-sig").splitlines()
+        self.assertEqual([line.split(",")[0] for line in lines[1:]], ["ITEM-001"])
+        lines = self.export("csv", sort="cost").content.decode("utf-8-sig").splitlines()
+        self.assertEqual([line.split(",")[0] for line in lines[1:]], ["ITEM-001", "ITEM-002"])
+
+        Product.objects.filter(code="ITEM-001").update(status=Status.STOPPED)
+        self.assertNotIn("ITEM-001", self.export("csv").content.decode("utf-8-sig"))
+        self.assertIn("ITEM-001", self.export("csv", status="all").content.decode("utf-8-sig"))
+
+    def test_list_has_links_with_current_filters(self):
+        response = self.client.get(reverse("product_list"), {"q": "バター", "sort": "rate"})
+        self.assertContains(response, reverse("product_export", args=["csv"]) + "?q=")
+        self.assertContains(response, "sort=rate")
+
+    def test_unknown_format_and_login(self):
+        self.assertEqual(self.export("pdf").status_code, 404)
+        self.client.logout()
+        self.assertEqual(self.export("csv").status_code, 302)

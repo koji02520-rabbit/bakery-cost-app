@@ -38,6 +38,7 @@ urlpatterns = [
 
     # 商品（S30〜S33）
     path("products/", products.product_list, name="product_list"),
+    path("products/export/<str:fmt>/", products.product_export, name="product_export"),
     path("products/new/", products.product_new, name="product_new"),
     path("products/<int:pk>/", products.product_detail, name="product_detail"),
     path("products/<int:pk>/edit/", products.product_edit, name="product_edit"),

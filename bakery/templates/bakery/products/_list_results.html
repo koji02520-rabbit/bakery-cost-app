@@ -1,5 +1,14 @@
 {% load bakery_format %}
-<p class="muted count">{{ page.paginator.count }} 件<span class="small">（税込は{{ tax_rate|rate_percent }}%・切り捨て）</span></p>
+<div class="list-head">
+  <p class="muted count">{{ page.paginator.count }} 件<span class="small">（税込は{{ tax_rate|rate_percent }}%・切り捨て）</span></p>
+  {% if page.object_list %}
+  <div class="export" role="group" aria-label="この一覧をダウンロード">
+    <span class="muted small">ダウンロード</span>
+    <a class="btn btn-small" href="{% url 'product_export' 'csv' %}?{{ query_without_page }}" download>CSV</a>
+    <a class="btn btn-small" href="{% url 'product_export' 'xlsx' %}?{{ query_without_page }}" download>Excel</a>
+  </div>
+  {% endif %}
+</div>
 {% if page.object_list %}
 <table class="table only-wide">
   <thead><tr>
